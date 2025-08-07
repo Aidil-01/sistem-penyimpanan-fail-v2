@@ -5,6 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     
+    <!-- PWA Meta Tags -->
+    <meta name="application-name" content="SPF Tongod">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="SPF Tongod">
+    <meta name="description" content="File storage system for office documents - Field officers mobile app">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="msapplication-config" content="/browserconfig.xml">
+    <meta name="msapplication-TileColor" content="#2563eb">
+    <meta name="msapplication-tap-highlight" content="no">
+    <meta name="theme-color" content="#2563eb">
+    
+    <!-- PWA Icons and Manifest -->
+    <link rel="apple-touch-icon" href="/icon-192x192.svg">
+    <link rel="apple-touch-icon" sizes="192x192" href="/icon-192x192.svg">
+    <link rel="apple-touch-icon" sizes="512x512" href="/icon-512x512.svg">
+    <link rel="icon" type="image/svg+xml" href="/favicon.ico">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="mask-icon" href="/icon-192x192.svg" color="#2563eb">
+    <link rel="shortcut icon" href="/favicon.ico">
+    
     <title>@yield('title', config('app.name', 'Sistem Penyimpanan Fail Tongod'))</title>
     
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -281,6 +303,65 @@
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- PWA Installation JavaScript -->
+    <script src="/js/pwa-install.js"></script>
+    
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then((registration) => {
+                        console.log('Service Worker registered successfully:', registration.scope);
+                        
+                        // Check for updates
+                        registration.addEventListener('updatefound', () => {
+                            const newWorker = registration.installing;
+                            if (newWorker) {
+                                newWorker.addEventListener('statechange', () => {
+                                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                        // New update available
+                                        if (confirm('Kemas kini baharu tersedia. Muat semula halaman untuk menggunakan versi terkini?')) {
+                                            window.location.reload();
+                                        }
+                                    }
+                                });
+                            }
+                        });
+                    })
+                    .catch((error) => {
+                        console.log('Service Worker registration failed:', error);
+                    });
+            });
+        }
+        
+        // Handle online/offline status
+        function updateOnlineStatus() {
+            const statusEl = document.getElementById('connection-status');
+            if (navigator.onLine) {
+                if (statusEl) statusEl.remove();
+            } else {
+                if (!statusEl) {
+                    const banner = document.createElement('div');
+                    banner.id = 'connection-status';
+                    banner.className = 'alert alert-warning alert-dismissible fade show';
+                    banner.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; z-index: 10000; margin: 0; border-radius: 0;';
+                    banner.innerHTML = `
+                        <i class="fas fa-wifi-slash me-2"></i>
+                        <strong>Tiada sambungan internet</strong> - Beberapa fungsi mungkin terhad.
+                    `;
+                    document.body.insertBefore(banner, document.body.firstChild);
+                }
+            }
+        }
+        
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+        
+        // Initial check
+        updateOnlineStatus();
+    </script>
     
     @stack('scripts')
 </body>
