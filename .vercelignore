@@ -1,0 +1,26 @@
+/vendor
+/node_modules
+/public/storage
+/storage/*.key
+/.env
+/.env.backup
+/.phpunit.result.cache
+/Homestead.json
+/Homestead.yaml
+/npm-debug.log
+/yarn-error.log
+/.idea
+/.vscode
+/tests
+*.log
+.DS_Store
+Thumbs.db
+
+# Keep important deployment files
+!public/manifest.json
+!public/sw.js
+!public/offline.html
+!public/favicon.ico
+!public/icon-*.svg
+!public/icon-*.png
+!public/browserconfig.xml

@@ -1,0 +1,57 @@
+{
+  "version": 2,
+  "functions": {
+    "api/*.php": {
+      "runtime": "vercel-php@0.7.0"
+    }
+  },
+  "routes": [
+    {
+      "src": "/(manifest\\.json|sw\\.js|offline\\.html|favicon\\.ico|icon-.*\\.(svg|png)|browserconfig\\.xml)$",
+      "dest": "/public/$1",
+      "headers": {
+        "Cache-Control": "public, max-age=31536000, immutable"
+      }
+    },
+    {
+      "src": "/(css|js|images)/(.*)$",
+      "dest": "/public/$1/$2",
+      "headers": {
+        "Cache-Control": "public, max-age=31536000, immutable"
+      }
+    },
+    {
+      "src": "/public/(.*)",
+      "dest": "/public/$1"
+    },
+    {
+      "src": "/.*",
+      "dest": "/api/index.php"
+    }
+  ],
+  "env": {
+    "APP_NAME": "Sistem Penyimpanan Fail Tongod",
+    "APP_ENV": "production",
+    "APP_KEY": "base64:your-app-key-here-generate-this",
+    "APP_DEBUG": "false",
+    "APP_URL": "https://sistem-penyimpanan-fail-v2-dlbd6543o-aidils-projects-9810a3b2.vercel.app",
+    "DB_CONNECTION": "pgsql",
+    "DB_HOST": "postgres.railway.internal",
+    "DB_PORT": "5432",
+    "DB_DATABASE": "railway",
+    "DB_USERNAME": "postgres",
+    "DB_PASSWORD": "NvOz72WrYxgvbMafHFyELjMQtdQZIKLU",
+    "LOG_CHANNEL": "stderr",
+    "SESSION_DRIVER": "array",
+    "QUEUE_CONNECTION": "sync",
+    "CACHE_DRIVER": "array",
+    "VIEW_COMPILED_PATH": "/tmp",
+    "CACHE_PATH": "/tmp/cache",
+    "SESSION_LIFETIME": "120"
+  },
+  "build": {
+    "env": {
+      "COMPOSER_MIRROR_PATH_REPOS": "1"
+    }
+  }
+}
