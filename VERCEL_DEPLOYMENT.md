@@ -7,6 +7,12 @@
 - Railway PostgreSQL database running
 - Laravel app key generated
 
+### ⚠️ Common Issue: "invalid runtime nodejs18.x" 
+If you see this error, it means Vercel detected Node.js instead of PHP. This has been fixed with:
+- Specific PHP runtime configuration in `vercel.json`
+- Proper function definition for `api/index.php`
+- Laravel-optimized serverless entry point
+
 ### Step 1: Environment Setup
 1. Generate app key:
 ```bash

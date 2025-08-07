@@ -5,28 +5,73 @@ use Illuminate\Http\Request;
 
 define('LARAVEL_START', microtime(true));
 
-// Set the correct paths for Vercel
-$_ENV['APP_BASE_PATH'] = __DIR__ . '/..';
+// Vercel serverless function entry point for Laravel
+// Set the correct paths for Vercel deployment
+$app_base = realpath(__DIR__ . '/..');
 
-if (file_exists($maintenance = $_ENV['APP_BASE_PATH'].'/storage/framework/maintenance.php')) {
+// Check if we're in Vercel environment
+$is_vercel = isset($_ENV['VERCEL']) || isset($_ENV['NOW_REGION']);
+
+if ($is_vercel) {
+    // Vercel specific configurations
+    $_ENV['APP_BASE_PATH'] = $app_base;
+    $_ENV['STORAGE_PATH'] = '/tmp/storage';
+    
+    // Create storage directories in /tmp for Vercel
+    if (!file_exists('/tmp/storage')) {
+        mkdir('/tmp/storage', 0755, true);
+        mkdir('/tmp/storage/logs', 0755, true);
+        mkdir('/tmp/storage/framework', 0755, true);
+        mkdir('/tmp/storage/framework/cache', 0755, true);
+        mkdir('/tmp/storage/framework/sessions', 0755, true);
+        mkdir('/tmp/storage/framework/views', 0755, true);
+    }
+}
+
+// Check for maintenance mode
+if (file_exists($maintenance = $app_base.'/storage/framework/maintenance.php')) {
     require $maintenance;
 }
 
-require_once $_ENV['APP_BASE_PATH'].'/vendor/autoload.php';
+// Load Composer autoloader
+if (!file_exists($app_base.'/vendor/autoload.php')) {
+    http_response_code(500);
+    echo 'Error: Dependencies not installed. Please run "composer install"';
+    exit(1);
+}
 
-$app = require_once $_ENV['APP_BASE_PATH'].'/bootstrap/app.php';
+require_once $app_base.'/vendor/autoload.php';
+
+// Bootstrap Laravel application
+$app = require_once $app_base.'/bootstrap/app.php';
 
 // Set the public path for Laravel to work with Vercel
-$app->bind('path.public', function() {
-    return $_ENV['APP_BASE_PATH'] . '/public';
+$app->bind('path.public', function() use ($app_base) {
+    return $app_base . '/public';
 });
+
+// Override storage path for Vercel
+if ($is_vercel) {
+    $app->bind('path.storage', function() {
+        return '/tmp/storage';
+    });
+}
 
 $kernel = $app->make(Kernel::class);
 
-$response = $kernel->handle(
-    $request = Request::capture()
-);
+try {
+    $response = $kernel->handle(
+        $request = Request::capture()
+    );
 
-$response->send();
+    $response->send();
 
-$kernel->terminate($request, $response);
+    $kernel->terminate($request, $response);
+} catch (Exception $e) {
+    http_response_code(500);
+    if (env('APP_DEBUG', false)) {
+        echo 'Laravel Error: ' . $e->getMessage();
+    } else {
+        echo 'Application Error';
+    }
+}
