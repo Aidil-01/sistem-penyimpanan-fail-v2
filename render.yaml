@@ -3,24 +3,10 @@ services:
     name: sistem-penyimpanan-fail
     env: php
     plan: free
-    runtime: php
     buildCommand: |
-      echo "Installing system dependencies..."
-      apt-get update && apt-get install -y postgresql-client libpq-dev
-      echo "PHP Version:"
-      php --version
-      echo "Composer Version:"
-      composer --version
-      echo "Installing PHP dependencies..."
-      composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
-      echo "Laravel optimization..."
-      php artisan config:cache || echo "Config cache failed"
-      php artisan route:cache || echo "Route cache failed"
-      php artisan view:cache || echo "View cache failed"
-      echo "Build completed successfully!"
+      composer install --ignore-platform-reqs --no-dev
+      php artisan key:generate || true
     startCommand: |
-      echo "Starting application..."
-      php artisan migrate --force || echo "Migration failed"
       php artisan serve --host=0.0.0.0 --port=$PORT
     envVars:
       - key: APP_NAME
@@ -31,12 +17,6 @@ services:
         generateValue: true
       - key: APP_DEBUG
         value: false
-      - key: APP_URL
-        sync: false
-      - key: LOG_CHANNEL
-        value: stack
-      - key: LOG_LEVEL
-        value: error
       - key: DB_CONNECTION
         value: pgsql
       - key: DB_HOST
@@ -49,12 +29,3 @@ services:
         value: postgres
       - key: DB_PASSWORD
         value: NvOz72WrYxgvbMafHFyELjMQtdQZIKLU
-      - key: CACHE_DRIVER
-        value: file
-      - key: SESSION_DRIVER
-        value: file
-      - key: SESSION_LIFETIME
-        value: 120
-      - key: QUEUE_CONNECTION
-        value: sync
-    healthCheckPath: /
