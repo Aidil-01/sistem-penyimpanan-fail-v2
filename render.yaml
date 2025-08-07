@@ -5,14 +5,22 @@ services:
     plan: free
     runtime: php
     buildCommand: |
-      composer --version
+      echo "Installing system dependencies..."
+      apt-get update && apt-get install -y postgresql-client libpq-dev
+      echo "PHP Version:"
       php --version
-      composer install --no-dev --optimize-autoloader --ignore-platform-reqs
-      php artisan config:cache || true
-      php artisan route:cache || true
-      php artisan view:cache || true
+      echo "Composer Version:"
+      composer --version
+      echo "Installing PHP dependencies..."
+      composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
+      echo "Laravel optimization..."
+      php artisan config:cache || echo "Config cache failed"
+      php artisan route:cache || echo "Route cache failed"
+      php artisan view:cache || echo "View cache failed"
+      echo "Build completed successfully!"
     startCommand: |
-      php artisan migrate --force || true
+      echo "Starting application..."
+      php artisan migrate --force || echo "Migration failed"
       php artisan serve --host=0.0.0.0 --port=$PORT
     envVars:
       - key: APP_NAME
