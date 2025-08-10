@@ -1,7 +1,8 @@
 // Authentication module
-import { auth, db } from './firebase-config.js';
+import { auth, db, googleProvider } from './firebase-config.js';
 import { 
     signInWithEmailAndPassword, 
+    signInWithPopup,
     signOut, 
     onAuthStateChanged,
     sendPasswordResetEmail,
@@ -112,6 +113,20 @@ class AuthManager {
             return userCredential.user;
         } catch (error) {
             console.error('Login error:', error);
+            throw this.getAuthErrorMessage(error.code);
+        }
+    }
+
+    async loginWithGoogle() {
+        try {
+            const result = await signInWithPopup(auth, googleProvider);
+            
+            // Log login activity
+            await this.logActivity('google_login', `Pengguna ${result.user.email} log masuk dengan Google`);
+            
+            return result.user;
+        } catch (error) {
+            console.error('Google login error:', error);
             throw this.getAuthErrorMessage(error.code);
         }
     }
@@ -336,6 +351,24 @@ document.addEventListener('DOMContentLoaded', () => {
             await authManager.logout();
         } catch (error) {
             authManager.showAlert(error, 'error');
+        }
+    });
+
+    // Setup Google login button
+    document.getElementById('googleLoginBtn')?.addEventListener('click', async (e) => {
+        e.preventDefault();
+        
+        const googleBtn = e.target;
+        googleBtn.disabled = true;
+        googleBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Log masuk dengan Google...';
+        
+        try {
+            await authManager.loginWithGoogle();
+        } catch (error) {
+            authManager.showAlert(error, 'error');
+        } finally {
+            googleBtn.disabled = false;
+            googleBtn.innerHTML = '<i class="fab fa-google me-2"></i>Log masuk dengan Google';
         }
     });
 });

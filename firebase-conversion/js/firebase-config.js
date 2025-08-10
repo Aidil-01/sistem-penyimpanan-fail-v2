@@ -1,8 +1,7 @@
 // Firebase configuration
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import { getFirestore, connectFirestoreEmulator } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-import { getAuth, connectAuthEmulator } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-import { getFunctions, connectFunctionsEmulator } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js';
+import { getAuth, connectAuthEmulator, GoogleAuthProvider } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 import { getStorage, connectStorageEmulator } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
 
 // Firebase configuration object
@@ -22,8 +21,8 @@ const app = initializeApp(firebaseConfig);
 // Initialize Firebase services
 export const db = getFirestore(app);
 export const auth = getAuth(app);
-export const functions = getFunctions(app);
 export const storage = getStorage(app);
+export const googleProvider = new GoogleAuthProvider();
 
 // Enable offline persistence
 import { enableNetwork, disableNetwork } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
@@ -47,7 +46,6 @@ if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
     try {
         connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true });
         connectFirestoreEmulator(db, 'localhost', 8080);
-        connectFunctionsEmulator(functions, 'localhost', 5001);
         connectStorageEmulator(storage, 'localhost', 9199);
         console.log('Connected to Firebase emulators');
     } catch (error) {
