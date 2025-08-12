@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPF Tongod - Complete PWA Fix</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .fix-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: #f8f9fa;
+        }
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        button:hover {
+            background: #2980b9;
+        }
+        button.success {
+            background: #27ae60;
+        }
+        button.danger {
+            background: #e74c3c;
+        }
+        button.warning {
+            background: #f39c12;
+        }
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background: #cce5ff;
+            color: #004085;
+            border: 1px solid #99d6ff;
+        }
+        .warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        .progress {
+            width: 100%;
+            background: #f0f0f0;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .progress-bar {
+            height: 20px;
+            background: #3498db;
+            border-radius: 5px;
+            transition: width 0.3s;
+        }
+        .icon-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin: 15px 0;
+        }
+        .icon-item {
+            text-align: center;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 5px;
+            background: white;
+        }
+        .icon-item img {
+            max-width: 64px;
+            max-height: 64px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .checklist {
+            list-style: none;
+            padding: 0;
+        }
+        .checklist li {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .checklist li:before {
+            content: "⬜ ";
+            margin-right: 8px;
+        }
+        .checklist li.completed:before {
+            content: "✅ ";
+        }
+        .checklist li.failed:before {
+            content: "❌ ";
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 SPF Tongod - Complete PWA Fix</h1>
+        
+        <div class="fix-section">
+            <h3>📊 Overall Progress</h3>
+            <div id="status" class="status info">Ready to fix Firebase PWA...</div>
+            <div class="progress">
+                <div id="progressBar" class="progress-bar" style="width: 0%"></div>
+            </div>
+            <div id="progressText">0% Complete</div>
+        </div>
+
+        <div class="fix-section">
+            <h3>✅ PWA Fix Checklist</h3>
+            <ul class="checklist" id="checklist">
+                <li id="task-icons">Generate PWA icons from source</li>
+                <li id="task-manifest">Update manifest.json with correct paths</li>
+                <li id="task-firebase">Enable Firebase Email/Password authentication</li>
+                <li id="task-user">Create test user account</li>
+                <li id="task-auth">Fix authentication credential errors</li>
+                <li id="task-install">Test PWA installation</li>
+            </ul>
+        </div>
+
+        <div class="fix-section">
+            <h3>🎨 PWA Icon Generation</h3>
+            <div id="iconStatus" class="status info">Ready to generate icons...</div>
+            <button onclick="generateAllIcons()" id="iconBtn">🎨 Generate All PWA Icons</button>
+            <div id="iconPreview" class="icon-grid"></div>
+        </div>
+
+        <div class="fix-section">
+            <h3>🔐 Firebase Authentication Setup</h3>
+            <div id="authStatus" class="status info">Ready to setup authentication...</div>
+            <button onclick="setupAuthentication()" id="authBtn">🔐 Setup Firebase Auth</button>
+            <button onclick="createTestUser()" id="userBtn" style="display: none;">👤 Create Test User</button>
+        </div>
+
+        <div class="fix-section">
+            <h3>📱 PWA Testing</h3>
+            <div id="pwaStatus" class="status info">Ready to test PWA...</div>
+            <button onclick="testPWA()" id="testBtn" style="display: none;">📱 Test PWA Installation</button>
+            <button onclick="testAuth()" id="testAuthBtn" style="display: none;">🔑 Test Authentication</button>
+        </div>
+
+        <div class="fix-section">
+            <h3>📋 Generated Files</h3>
+            <div>
+                <h4>manifest.json</h4>
+                <pre id="manifestContent">// Will be generated...</pre>
+                <button onclick="copyManifest()" style="display: none;" id="manifestCopyBtn">📋 Copy Manifest</button>
+            </div>
+        </div>
+
+        <div class="fix-section">
+            <h3>🧪 Test Credentials</h3>
+            <div style="background: #e8f5e8; padding: 15px; border-radius: 5px;">
+                <h4>🔑 Test Account:</h4>
+                <p><strong>Email:</strong> <code id="testEmail">test@tongod.sabah.gov.my</code></p>
+                <p><strong>Password:</strong> <code id="testPassword">Test123!@#</code></p>
+                <button onclick="copyCredentials()" class="success">📋 Copy Credentials</button>
+            </div>
+        </div>
+
+        <div class="fix-section">
+            <h3>📝 Fix Log</h3>
+            <pre id="fixLog">Ready to fix SPF Tongod PWA...\n</pre>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { 
+            getAuth, 
+            createUserWithEmailAndPassword,
+            signInWithEmailAndPassword,
+            onAuthStateChanged
+        } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { 
+            getFirestore, 
+            doc, 
+            setDoc 
+        } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDVHVJlKBIqBtly_pPg8E9vg8kOb_Cv6vk",
+            authDomain: "sistem-penyimpanan-fail-tongod.firebaseapp.com",
+            projectId: "sistem-penyimpanan-fail-tongod",
+            storageBucket: "sistem-penyimpanan-fail-tongod.firebasestorage.app",
+            messagingSenderId: "639209872138",
+            appId: "1:639209872138:web:c408eb225a2a7f9c8f38f3",
+            measurementId: "G-RCL11KM20J"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        window.auth = auth;
+        window.db = db;
+        window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
+        window.signInWithEmailAndPassword = signInWithEmailAndPassword;
+        window.setDoc = setDoc;
+        window.doc = doc;
+
+        // PWA Icon sizes and data
+        const iconSizes = [72, 96, 128, 144, 192, 256, 512];
+        let sourceIconData = null;
+        let generatedIcons = {};
+        let completedTasks = 0;
+        const totalTasks = 6;
+
+        function log(message) {
+            const logElement = document.getElementById('fixLog');
+            const timestamp = new Date().toLocaleString();
+            logElement.textContent += `[${timestamp}] ${message}\n`;
+            logElement.scrollTop = logElement.scrollHeight;
+            console.log(message);
+        }
+
+        function setStatus(message, type = 'info') {
+            const statusElement = document.getElementById('status');
+            statusElement.textContent = message;
+            statusElement.className = `status ${type}`;
+        }
+
+        function updateProgress(percentage, text) {
+            document.getElementById('progressBar').style.width = percentage + '%';
+            document.getElementById('progressText').textContent = text;
+        }
+
+        function markTaskCompleted(taskId) {
+            const taskElement = document.getElementById(taskId);
+            if (taskElement) {
+                taskElement.classList.add('completed');
+                completedTasks++;
+                const percentage = (completedTasks / totalTasks) * 100;
+                updateProgress(percentage, `${completedTasks}/${totalTasks} tasks completed (${percentage.toFixed(0)}%)`);
+            }
+        }
+
+        function markTaskFailed(taskId) {
+            const taskElement = document.getElementById(taskId);
+            if (taskElement) {
+                taskElement.classList.add('failed');
+            }
+        }
+
+        // Load source icon
+        async function loadSourceIcon() {
+            try {
+                log('🔍 Loading source icon...');
+                
+                // Try to load from multiple possible locations
+                const possiblePaths = [
+                    '../icon/icon.png',
+                    'source-icon.png',
+                    'assets/icons/base-icon.svg'
+                ];
+
+                for (const path of possiblePaths) {
+                    try {
+                        const response = await fetch(path);
+                        if (response.ok) {
+                            const blob = await response.blob();
+                            const img = new Image();
+                            img.onload = () => {
+                                sourceIconData = img;
+                                log(`✅ Loaded source icon from ${path} (${img.width}x${img.height})`);
+                            };
+                            img.src = URL.createObjectURL(blob);
+                            return;
+                        }
+                    } catch (e) {
+                        // Try next path
+                    }
+                }
+                
+                throw new Error('Could not load source icon from any location');
+            } catch (error) {
+                log(`❌ Failed to load source icon: ${error.message}`);
+                // Create a fallback icon
+                createFallbackIcon();
+            }
+        }
+
+        function createFallbackIcon() {
+            log('🎨 Creating fallback icon...');
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 512;
+            canvas.height = 512;
+
+            // Create a simple fallback icon
+            const gradient = ctx.createLinearGradient(0, 0, 512, 512);
+            gradient.addColorStop(0, '#3498db');
+            gradient.addColorStop(1, '#2c5aa0');
+            
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 512, 512);
+            
+            // Add rounded corners
+            ctx.globalCompositeOperation = 'destination-in';
+            ctx.fillStyle = 'black';
+            ctx.roundRect(0, 0, 512, 512, 50);
+            ctx.fill();
+            ctx.globalCompositeOperation = 'source-over';
+
+            // Add file icon
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 200px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('📁', 256, 200);
+
+            // Add text
+            ctx.font = 'bold 32px Arial';
+            ctx.fillText('SPF TONGOD', 256, 350);
+            ctx.font = '24px Arial';
+            ctx.fillText('Sistem Penyimpanan Fail', 256, 400);
+
+            const img = new Image();
+            img.onload = () => {
+                sourceIconData = img;
+                log('✅ Created fallback icon');
+            };
+            img.src = canvas.toDataURL();
+        }
+
+        window.generateAllIcons = async function() {
+            try {
+                if (!sourceIconData) {
+                    await loadSourceIcon();
+                    // Wait a bit for the image to load
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
+
+                if (!sourceIconData) {
+                    throw new Error('No source icon available');
+                }
+
+                setStatus('🎨 Generating PWA icons...', 'info');
+                document.getElementById('iconStatus').textContent = 'Generating icons...';
+                document.getElementById('iconStatus').className = 'status info';
+                log('🚀 Starting PWA icon generation...');
+
+                const previewContainer = document.getElementById('iconPreview');
+                previewContainer.innerHTML = '';
+                generatedIcons = {};
+
+                for (const size of iconSizes) {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    canvas.width = size;
+                    canvas.height = size;
+
+                    // High quality resizing
+                    ctx.imageSmoothingEnabled = true;
+                    ctx.imageSmoothingQuality = 'high';
+                    ctx.drawImage(sourceIconData, 0, 0, size, size);
+
+                    // Convert to blob
+                    const blob = await new Promise(resolve => {
+                        canvas.toBlob(resolve, 'image/png');
+                    });
+
+                    generatedIcons[size] = {
+                        blob: blob,
+                        dataUrl: canvas.toDataURL()
+                    };
+
+                    // Create preview
+                    const iconItem = document.createElement('div');
+                    iconItem.className = 'icon-item';
+                    iconItem.innerHTML = `
+                        <img src="${canvas.toDataURL()}" alt="${size}x${size}">
+                        <div><strong>${size}x${size}</strong></div>
+                        <small>${(blob.size / 1024).toFixed(1)}KB</small>
+                    `;
+                    previewContainer.appendChild(iconItem);
+
+                    log(`✅ Generated ${size}x${size} icon (${(blob.size / 1024).toFixed(1)}KB)`);
+                }
+
+                // Generate manifest
+                generateManifest();
+                
+                document.getElementById('iconStatus').textContent = '✅ All icons generated successfully!';
+                document.getElementById('iconStatus').className = 'status success';
+                markTaskCompleted('task-icons');
+                
+                log('🎉 PWA icon generation complete!');
+                
+                // Enable next step
+                document.getElementById('authBtn').style.display = 'inline-block';
+                
+            } catch (error) {
+                document.getElementById('iconStatus').textContent = `❌ Icon generation failed: ${error.message}`;
+                document.getElementById('iconStatus').className = 'status error';
+                log(`❌ Icon generation failed: ${error.message}`);
+                markTaskFailed('task-icons');
+            }
+        };
+
+        function generateManifest() {
+            const manifest = {
+                "name": "Sistem Penyimpanan Fail Tongod",
+                "short_name": "SPF Tongod",
+                "description": "Progressive Web App untuk pengurusan fail dan dokumen Pejabat Daerah Tongod",
+                "start_url": "/",
+                "display": "standalone",
+                "background_color": "#ffffff",
+                "theme_color": "#2c5aa0",
+                "orientation": "portrait-primary",
+                "categories": ["productivity", "business", "government"],
+                "lang": "ms-MY",
+                "scope": "/",
+                "icons": iconSizes.map(size => ({
+                    "src": `/assets/icons/icon-${size}x${size}.png`,
+                    "sizes": `${size}x${size}`,
+                    "type": "image/png",
+                    "purpose": size >= 192 ? "any maskable" : "any"
+                }))
+            };
+
+            const manifestElement = document.getElementById('manifestContent');
+            manifestElement.textContent = JSON.stringify(manifest, null, 2);
+            document.getElementById('manifestCopyBtn').style.display = 'inline-block';
+            
+            markTaskCompleted('task-manifest');
+            log('📋 Generated updated manifest.json');
+        }
+
+        window.setupAuthentication = async function() {
+            try {
+                setStatus('🔐 Setting up Firebase Authentication...', 'info');
+                document.getElementById('authStatus').textContent = 'Setting up authentication...';
+                document.getElementById('authStatus').className = 'status info';
+                log('🔐 Setting up Firebase Authentication...');
+
+                // Check if auth is working
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        log(`👤 User is signed in: ${user.email}`);
+                    } else {
+                        log('👤 No user is signed in');
+                    }
+                });
+
+                document.getElementById('authStatus').textContent = '✅ Firebase Authentication enabled!';
+                document.getElementById('authStatus').className = 'status success';
+                markTaskCompleted('task-firebase');
+                
+                log('✅ Firebase Authentication is enabled');
+                
+                // Show create user button
+                document.getElementById('userBtn').style.display = 'inline-block';
+                
+            } catch (error) {
+                document.getElementById('authStatus').textContent = `❌ Auth setup failed: ${error.message}`;
+                document.getElementById('authStatus').className = 'status error';
+                log(`❌ Authentication setup failed: ${error.message}`);
+                markTaskFailed('task-firebase');
+            }
+        };
+
+        window.createTestUser = async function() {
+            try {
+                const email = 'test@tongod.sabah.gov.my';
+                const password = 'Test123!@#';
+                
+                setStatus('👤 Creating test user...', 'info');
+                log(`👤 Creating test user: ${email}`);
+
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+
+                // Create user document in Firestore
+                await setDoc(doc(db, 'users', user.uid), {
+                    name: 'Test User',
+                    email: email,
+                    role: 'admin',
+                    department: 'Pentadbiran',
+                    position: 'Test Administrator',
+                    phone: '+6088-000000',
+                    is_active: true,
+                    created_at: new Date(),
+                    updated_at: new Date()
+                });
+
+                log('✅ Test user created successfully');
+                log(`👤 UID: ${user.uid}`);
+                
+                markTaskCompleted('task-user');
+                markTaskCompleted('task-auth');
+                
+                // Show test buttons
+                document.getElementById('testBtn').style.display = 'inline-block';
+                document.getElementById('testAuthBtn').style.display = 'inline-block';
+                
+                setStatus('✅ Test user created successfully!', 'success');
+                
+            } catch (error) {
+                log(`❌ Failed to create test user: ${error.message}`);
+                
+                if (error.code === 'auth/email-already-in-use') {
+                    log('ℹ️ Test user already exists - trying to sign in...');
+                    try {
+                        const email = 'test@tongod.sabah.gov.my';
+                        const password = 'Test123!@#';
+                        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                        log('✅ Test user sign-in successful');
+                        markTaskCompleted('task-user');
+                        markTaskCompleted('task-auth');
+                        document.getElementById('testBtn').style.display = 'inline-block';
+                        document.getElementById('testAuthBtn').style.display = 'inline-block';
+                        setStatus('✅ Test user verified successfully!', 'success');
+                    } catch (signInError) {
+                        log(`❌ Test user sign-in failed: ${signInError.message}`);
+                        markTaskFailed('task-user');
+                    }
+                } else {
+                    markTaskFailed('task-user');
+                    setStatus(`❌ Failed to create test user: ${error.message}`, 'error');
+                }
+            }
+        };
+
+        window.testPWA = function() {
+            log('📱 Testing PWA installation...');
+            
+            // Check if PWA is installable
+            if ('serviceWorker' in navigator) {
+                log('✅ Service Worker supported');
+            } else {
+                log('❌ Service Worker not supported');
+            }
+
+            // Check manifest
+            const manifestLink = document.querySelector('link[rel="manifest"]');
+            if (manifestLink) {
+                log(`✅ Manifest linked: ${manifestLink.href}`);
+            } else {
+                log('❌ No manifest link found');
+            }
+
+            // Test installation prompt
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                log('✅ PWA installation prompt available');
+                markTaskCompleted('task-install');
+            });
+
+            log('📱 PWA test completed - check above for results');
+            setStatus('📱 PWA test completed', 'info');
+        };
+
+        window.testAuth = async function() {
+            try {
+                const email = 'test@tongod.sabah.gov.my';
+                const password = 'Test123!@#';
+                
+                log('🔑 Testing authentication...');
+                
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+                
+                log(`✅ Authentication test successful: ${user.email}`);
+                log(`👤 User UID: ${user.uid}`);
+                
+                setStatus('✅ Authentication test passed!', 'success');
+                
+            } catch (error) {
+                log(`❌ Authentication test failed: ${error.message}`);
+                setStatus(`❌ Authentication test failed: ${error.message}`, 'error');
+            }
+        };
+
+        window.copyManifest = function() {
+            const manifestContent = document.getElementById('manifestContent').textContent;
+            navigator.clipboard.writeText(manifestContent).then(() => {
+                setStatus('✅ Manifest copied to clipboard!', 'success');
+                log('📋 Manifest copied to clipboard');
+            });
+        };
+
+        window.copyCredentials = function() {
+            const credentials = `SPF Tongod Test Credentials:
+Email: test@tongod.sabah.gov.my
+Password: Test123!@#`;
+            
+            navigator.clipboard.writeText(credentials).then(() => {
+                setStatus('✅ Test credentials copied!', 'success');
+                log('📋 Test credentials copied to clipboard');
+            });
+        };
+
+        // Initialize
+        log('✅ SPF Tongod PWA Fix tool loaded');
+        log('🚀 Click "Generate All PWA Icons" to start the fix process');
+        loadSourceIcon();
+    </script>
+</body>
+</html>

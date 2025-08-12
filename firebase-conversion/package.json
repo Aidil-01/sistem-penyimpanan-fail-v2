@@ -17,8 +17,12 @@
   ],
   "author": "SPF Tongod",
   "license": "UNLICENSED",
-  "dependencies": {},
-  "devDependencies": {},
+  "dependencies": {
+    "firebase-admin": "^12.0.0"
+  },
+  "devDependencies": {
+    "firebase-tools": "^13.0.0"
+  },
   "engines": {
     "node": ">=16.0.0"
   }

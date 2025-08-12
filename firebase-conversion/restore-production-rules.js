@@ -1,15 +1,10 @@
-rules_version = '2';
+// Script to restore production Firestore security rules after data import
+// Run this after completing the data import
+
+const productionRules = `rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // TEMPORARY IMPORT RULES - ALLOW ALL OPERATIONS FOR DATA IMPORT
-    // TODO: Replace with production rules after import is complete
-    match /{document=**} {
-      allow read, write: if true;
-    }
-    
-    // PRODUCTION RULES (commented out during import):
-    /*
     // Users collection - users can read/write their own profile
     match /users/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
@@ -53,6 +48,10 @@ service cloud.firestore {
       allow read, write: if request.auth != null && 
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'staff_jabatan'];
     }
-    */
   }
-}
+}`;
+
+console.log('📋 Production Firestore Rules:');
+console.log(productionRules);
+console.log('\n🔒 Copy the above rules to firestore.rules file and deploy with:');
+console.log('firebase deploy --only firestore:rules');

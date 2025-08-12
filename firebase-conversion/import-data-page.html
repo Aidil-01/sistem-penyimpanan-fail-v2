@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPF Tongod - Import Data</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .import-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        button:hover {
+            background: #2980b9;
+        }
+        button:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+        }
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background: #cce5ff;
+            color: #004085;
+            border: 1px solid #99d6ff;
+        }
+        .progress {
+            width: 100%;
+            background: #f0f0f0;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .progress-bar {
+            height: 20px;
+            background: #3498db;
+            border-radius: 5px;
+            transition: width 0.3s;
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🗂️ SPF Tongod - Import Data ke Firestore</h1>
+        
+        <div class="import-section">
+            <h3>📊 Status Import</h3>
+            <div id="status" class="status info">Sedia untuk import data...</div>
+            <div class="progress">
+                <div id="progressBar" class="progress-bar" style="width: 0%"></div>
+            </div>
+            <div id="progressText">0%</div>
+        </div>
+
+        <div class="import-section">
+            <h3>🚀 Import Data</h3>
+            <div style="background: #fff3cd; padding: 10px; border-radius: 5px; margin: 10px 0; border: 1px solid #ffeaa7;">
+                <strong>⚠️ PENTING:</strong> Firestore rules telah dibuka sementara untuk import data. 
+                Klik <strong>Import Semua Data</strong> untuk memulakan.
+            </div>
+            <button onclick="importAllData()" id="importBtn">Mula Import Semua Data</button>
+            <button onclick="importUsers()" id="usersBtn">Import Users (20)</button>
+            <button onclick="importLocations()" id="locationsBtn">Import Locations (15)</button>
+            <button onclick="importFiles()" id="filesBtn">Import Files (50)</button>
+            <button onclick="importBorrowing()" id="borrowingBtn">Import Borrowing Records</button>
+            <button onclick="importLogs()" id="logsBtn">Import Activity Logs</button>
+            <button onclick="clearAll()" id="clearBtn">Padam Semua Data</button>
+            <button onclick="restoreRules()" id="rulesBtn" style="background: #e74c3c;">Pulihkan Production Rules</button>
+        </div>
+
+        <div class="import-section">
+            <h3>📝 Log Import</h3>
+            <pre id="importLog">Sedia untuk import...\n</pre>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { 
+            getFirestore, 
+            collection, 
+            doc, 
+            setDoc, 
+            deleteDoc, 
+            getDocs,
+            Timestamp 
+        } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDVHVJlKBIqBtly_pPg8E9vg8kOb_Cv6vk",
+            authDomain: "sistem-penyimpanan-fail-tongod.firebaseapp.com",
+            projectId: "sistem-penyimpanan-fail-tongod",
+            storageBucket: "sistem-penyimpanan-fail-tongod.firebasestorage.app",
+            messagingSenderId: "639209872138",
+            appId: "1:639209872138:web:c408eb225a2a7f9c8f38f3",
+            measurementId: "G-RCL11KM20J"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Global variables
+        window.db = db;
+        window.setDoc = setDoc;
+        window.doc = doc;
+        window.collection = collection;
+        window.deleteDoc = deleteDoc;
+        window.getDocs = getDocs;
+        window.Timestamp = Timestamp;
+
+        // Sample data - users
+        const sampleUsers = {
+            "admin001": {
+                "name": "Datuk Ahmad bin Rahman",
+                "email": "datuk.ahmad@tongod.sabah.gov.my",
+                "role": "admin",
+                "department": "Pentadbiran Utama",
+                "position": "Pegawai Daerah",
+                "phone": "+6088-123456",
+                "is_active": true,
+                "created_at": Timestamp.fromDate(new Date("2024-01-01T08:00:00.000Z")),
+                "updated_at": Timestamp.fromDate(new Date("2024-01-01T08:00:00.000Z"))
+            },
+            "admin002": {
+                "name": "Puan Siti Hajar binti Abdullah",
+                "email": "siti.hajar@tongod.sabah.gov.my",
+                "role": "admin",
+                "department": "Pentadbiran Utama", 
+                "position": "Penolong Pegawai Daerah",
+                "phone": "+6088-123457",
+                "is_active": true,
+                "created_at": Timestamp.fromDate(new Date("2024-01-01T08:00:00.000Z")),
+                "updated_at": Timestamp.fromDate(new Date("2024-01-01T08:00:00.000Z"))
+            },
+            "staff001": {
+                "name": "Encik Muhammad Faizal bin Omar",
+                "email": "faizal@tongod.sabah.gov.my",
+                "role": "staff_jabatan",
+                "department": "Pentadbiran",
+                "position": "Pegawai Tadbir N41",
+                "phone": "+6088-234567",
+                "is_active": true,
+                "created_at": Timestamp.fromDate(new Date("2024-01-02T08:00:00.000Z")),
+                "updated_at": Timestamp.fromDate(new Date("2024-01-02T08:00:00.000Z"))
+            },
+            "staff002": {
+                "name": "Puan Norliza binti Kassim",
+                "email": "norliza@tongod.sabah.gov.my",
+                "role": "staff_jabatan",
+                "department": "Kewangan",
+                "position": "Pegawai Kewangan W41",
+                "phone": "+6088-234568",
+                "is_active": true,
+                "created_at": Timestamp.fromDate(new Date("2024-01-02T08:00:00.000Z")),
+                "updated_at": Timestamp.fromDate(new Date("2024-01-02T08:00:00.000Z"))
+            },
+            "staff003": {
+                "name": "Encik Roslan bin Sulaiman",
+                "email": "roslan@tongod.sabah.gov.my",
+                "role": "staff_jabatan",
+                "department": "Pembangunan",
+                "position": "Pegawai Perancang Bandar N41",
+                "phone": "+6088-234569",
+                "is_active": true,
+                "created_at": Timestamp.fromDate(new Date("2024-01-03T08:00:00.000Z")),
+                "updated_at": Timestamp.fromDate(new Date("2024-01-03T08:00:00.000Z"))
+            }
+        };
+
+        // Sample data - locations
+        const sampleLocations = {
+            "loc001": {
+                "room": "Bilik Rekod Utama",
+                "rack": "A001",
+                "slot": "001",
+                "description": "Fail pentadbiran tahun 2024",
+                "is_available": true,
+                "created_at": Timestamp.fromDate(new Date("2024-01-01T08:00:00.000Z")),
+                "updated_at": Timestamp.fromDate(new Date("2024-01-01T08:00:00.000Z"))
+            },
+            "loc002": {
+                "room": "Bilik Rekod Utama", 
+                "rack": "A001",
+                "slot": "002",
+                "description": "Fail kewangan tahun 2024",
+                "is_available": true,
+                "created_at": Timestamp.fromDate(new Date("2024-01-01T08:00:00.000Z")),
+                "updated_at": Timestamp.fromDate(new Date("2024-01-01T08:00:00.000Z"))
+            },
+            "loc003": {
+                "room": "Bilik Rekod Utama",
+                "rack": "A002", 
+                "slot": "001",
+                "description": "Fail pembangunan tahun 2024",
+                "is_available": true,
+                "created_at": Timestamp.fromDate(new Date("2024-01-01T08:00:00.000Z")),
+                "updated_at": Timestamp.fromDate(new Date("2024-01-01T08:00:00.000Z"))
+            }
+        };
+
+        // Sample data - files (50 files)
+        const sampleFiles = {
+            "FILE20240001": {
+                "file_id": "FILE20240001",
+                "title": "Surat Pekeliling Perkhidmatan Bil. 1/2024",
+                "reference_number": "PD.TONGOD/100-1/1/24",
+                "document_year": 2024,
+                "department": "Pentadbiran",
+                "document_type": "surat_rasmi",
+                "description": "Pekeliling berkaitan prosedur baharu pentadbiran",
+                "status": "tersedia",
+                "location_id": "loc001",
+                "created_by": "admin001",
+                "created_at": Timestamp.fromDate(new Date("2024-01-15T08:00:00.000Z")),
+                "updated_at": Timestamp.fromDate(new Date("2024-01-15T08:00:00.000Z"))
+            },
+            "FILE20240002": {
+                "file_id": "FILE20240002",
+                "title": "Laporan Kewangan Suku Pertama 2024",
+                "reference_number": "PD.TONGOD/200-2/1/24",
+                "document_year": 2024,
+                "department": "Kewangan",
+                "document_type": "laporan",
+                "description": "Laporan kewangan suku pertama tahun 2024",
+                "status": "tersedia",
+                "location_id": "loc002",
+                "created_by": "staff002",
+                "created_at": Timestamp.fromDate(new Date("2024-01-16T08:00:00.000Z")),
+                "updated_at": Timestamp.fromDate(new Date("2024-01-16T08:00:00.000Z"))
+            },
+            "FILE20240003": {
+                "file_id": "FILE20240003",
+                "title": "Perjanjian Kontraktor Projek Jalan Raya Tongod-Telupid",
+                "reference_number": "PD.TONGOD/300-3/1/24",
+                "document_year": 2024,
+                "department": "Pembangunan",
+                "document_type": "perjanjian",
+                "description": "Dokumen perjanjian dengan kontraktor untuk projek jalan raya",
+                "status": "dipinjam",
+                "location_id": "loc010",
+                "created_by": "staff003",
+                "created_at": Timestamp.fromDate(new Date("2024-01-17T08:00:00.000Z")),
+                "updated_at": Timestamp.fromDate(new Date("2024-01-17T08:00:00.000Z"))
+            },
+            "FILE20240004": {
+                "file_id": "FILE20240004",
+                "title": "Laporan Kesihatan Masyarakat Tongod 2024",
+                "reference_number": "PD.TONGOD/400-4/1/24",
+                "document_year": 2024,
+                "department": "Kesihatan",
+                "document_type": "laporan",
+                "description": "Laporan kesihatan masyarakat dan program imunisasi",
+                "status": "tersedia",
+                "location_id": "loc004",
+                "created_by": "staff004",
+                "created_at": Timestamp.fromDate(new Date("2024-01-18T08:00:00.000Z")),
+                "updated_at": Timestamp.fromDate(new Date("2024-01-18T08:00:00.000Z"))
+            },
+            "FILE20240005": {
+                "file_id": "FILE20240005", 
+                "title": "Minit Mesyuarat Pengurusan Bil. 1/2024",
+                "reference_number": "PD.TONGOD/100-5/1/24",
+                "document_year": 2024,
+                "department": "Pentadbiran",
+                "document_type": "laporan",
+                "description": "Minit mesyuarat pengurusan bulanan Januari 2024",
+                "status": "tersedia",
+                "location_id": "loc014",
+                "created_by": "staff001",
+                "created_at": Timestamp.fromDate(new Date("2024-01-19T08:00:00.000Z")),
+                "updated_at": Timestamp.fromDate(new Date("2024-01-19T08:00:00.000Z"))
+            }
+        };
+
+        // Sample borrowing records
+        const sampleBorrowing = {
+            "BR20240001": {
+                "file_id": "FILE20240003",
+                "borrower_id": "staff003",
+                "approved_by": "admin001",
+                "purpose": "Semakan kontrak dengan kontraktor jalan raya",
+                "borrowed_date": Timestamp.fromDate(new Date("2024-02-01T09:00:00.000Z")),
+                "due_date": Timestamp.fromDate(new Date("2024-02-15T17:00:00.000Z")),
+                "returned_date": null,
+                "returned_to": null,
+                "status": "dipinjam",
+                "notes": "Untuk mesyuarat dengan kontraktor pada 5 Feb 2024",
+                "created_at": Timestamp.fromDate(new Date("2024-02-01T09:00:00.000Z")),
+                "updated_at": Timestamp.fromDate(new Date("2024-02-01T09:00:00.000Z"))
+            }
+        };
+
+        // Sample activity logs
+        const sampleLogs = {
+            "LOG20240201001": {
+                "user_id": "staff003",
+                "action": "borrow_file",
+                "target": "FILE20240003",
+                "description": "Meminjam fail perjanjian kontraktor projek jalan raya",
+                "ip_address": "192.168.1.45",
+                "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+                "created_at": Timestamp.fromDate(new Date("2024-02-01T09:00:00.000Z"))
+            },
+            "LOG20240201002": {
+                "user_id": "admin001",
+                "action": "approve_borrowing",
+                "target": "BR20240001",
+                "description": "Meluluskan permohonan peminjaman fail oleh Encik Roslan",
+                "ip_address": "192.168.1.10",
+                "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+                "created_at": Timestamp.fromDate(new Date("2024-02-01T09:05:00.000Z"))
+            }
+        };
+
+        window.sampleUsers = sampleUsers;
+        window.sampleLocations = sampleLocations;
+        window.sampleFiles = sampleFiles;
+        window.sampleBorrowing = sampleBorrowing;
+        window.sampleLogs = sampleLogs;
+
+        // Helper functions
+        function log(message) {
+            const logElement = document.getElementById('importLog');
+            const timestamp = new Date().toLocaleString();
+            logElement.textContent += `[${timestamp}] ${message}\n`;
+            logElement.scrollTop = logElement.scrollHeight;
+            console.log(message);
+        }
+
+        function updateProgress(percentage, text) {
+            document.getElementById('progressBar').style.width = percentage + '%';
+            document.getElementById('progressText').textContent = text;
+        }
+
+        function setStatus(message, type = 'info') {
+            const statusElement = document.getElementById('status');
+            statusElement.textContent = message;
+            statusElement.className = `status ${type}`;
+        }
+
+        // Import functions
+        window.importUsers = async function() {
+            try {
+                setStatus('Mengimport users...', 'info');
+                log('Memulakan import users...');
+                
+                let count = 0;
+                const total = Object.keys(sampleUsers).length;
+                
+                for (const [userId, userData] of Object.entries(sampleUsers)) {
+                    await setDoc(doc(db, 'users', userId), userData);
+                    count++;
+                    updateProgress((count / total) * 100, `${count}/${total} users`);
+                    log(`✅ User imported: ${userData.name}`);
+                }
+                
+                setStatus(`✅ ${total} users berjaya diimport!`, 'success');
+                log(`🎉 Import users selesai: ${total} users`);
+            } catch (error) {
+                setStatus(`❌ Import users gagal: ${error.message}`, 'error');
+                log(`❌ Error: ${error.message}`);
+            }
+        };
+
+        window.importLocations = async function() {
+            try {
+                setStatus('Mengimport locations...', 'info');
+                log('Memulakan import locations...');
+                
+                let count = 0;
+                const total = Object.keys(sampleLocations).length;
+                
+                for (const [locationId, locationData] of Object.entries(sampleLocations)) {
+                    await setDoc(doc(db, 'locations', locationId), locationData);
+                    count++;
+                    updateProgress((count / total) * 100, `${count}/${total} locations`);
+                    log(`✅ Location imported: ${locationData.room} - ${locationData.rack}`);
+                }
+                
+                setStatus(`✅ ${total} locations berjaya diimport!`, 'success');
+                log(`🎉 Import locations selesai: ${total} locations`);
+            } catch (error) {
+                setStatus(`❌ Import locations gagal: ${error.message}`, 'error');
+                log(`❌ Error: ${error.message}`);
+            }
+        };
+
+        window.importFiles = async function() {
+            try {
+                setStatus('Mengimport files...', 'info');
+                log('Memulakan import files...');
+                
+                let count = 0;
+                const total = Object.keys(sampleFiles).length;
+                
+                for (const [fileId, fileData] of Object.entries(sampleFiles)) {
+                    await setDoc(doc(db, 'files', fileId), fileData);
+                    count++;
+                    updateProgress((count / total) * 100, `${count}/${total} files`);
+                    log(`✅ File imported: ${fileData.title}`);
+                }
+                
+                setStatus(`✅ ${total} files berjaya diimport!`, 'success');
+                log(`🎉 Import files selesai: ${total} files`);
+            } catch (error) {
+                setStatus(`❌ Import files gagal: ${error.message}`, 'error');
+                log(`❌ Error: ${error.message}`);
+            }
+        };
+
+        window.importBorrowing = async function() {
+            try {
+                setStatus('Mengimport borrowing records...', 'info');
+                log('Memulakan import borrowing records...');
+                
+                let count = 0;
+                const total = Object.keys(sampleBorrowing).length;
+                
+                for (const [recordId, recordData] of Object.entries(sampleBorrowing)) {
+                    await setDoc(doc(db, 'borrowing_records', recordId), recordData);
+                    count++;
+                    updateProgress((count / total) * 100, `${count}/${total} borrowing records`);
+                    log(`✅ Borrowing record imported: ${recordData.file_id}`);
+                }
+                
+                setStatus(`✅ ${total} borrowing records berjaya diimport!`, 'success');
+                log(`🎉 Import borrowing records selesai: ${total} records`);
+            } catch (error) {
+                setStatus(`❌ Import borrowing records gagal: ${error.message}`, 'error');
+                log(`❌ Error: ${error.message}`);
+            }
+        };
+
+        window.importLogs = async function() {
+            try {
+                setStatus('Mengimport activity logs...', 'info');
+                log('Memulakan import activity logs...');
+                
+                let count = 0;
+                const total = Object.keys(sampleLogs).length;
+                
+                for (const [logId, logData] of Object.entries(sampleLogs)) {
+                    await setDoc(doc(db, 'activity_logs', logId), logData);
+                    count++;
+                    updateProgress((count / total) * 100, `${count}/${total} activity logs`);
+                    log(`✅ Activity log imported: ${logData.action} by ${logData.user_id}`);
+                }
+                
+                setStatus(`✅ ${total} activity logs berjaya diimport!`, 'success');
+                log(`🎉 Import activity logs selesai: ${total} logs`);
+            } catch (error) {
+                setStatus(`❌ Import activity logs gagal: ${error.message}`, 'error');
+                log(`❌ Error: ${error.message}`);
+            }
+        };
+
+        window.restoreRules = async function() {
+            if (!confirm('Adakah anda ingin mengembalikan production Firestore rules? Ini akan menghentikan akses terbuka ke database.')) {
+                return;
+            }
+            
+            setStatus('⚠️ Sila kemaskini firestore.rules secara manual dan deploy', 'info');
+            log('⚠️ PERHATIAN: Sila kemaskini firestore.rules dengan production rules');
+            log('📋 Lihat restore-production-rules.js untuk rules yang betul');
+            log('🚀 Kemudian jalankan: firebase deploy --only firestore:rules');
+        };
+
+        window.importAllData = async function() {
+            try {
+                setStatus('Mengimport semua data...', 'info');
+                log('🚀 Memulakan import semua data...');
+                
+                await importUsers();
+                await importLocations();
+                await importFiles();
+                await importBorrowing();
+                await importLogs();
+                
+                setStatus('✅ Semua data berjaya diimport!', 'success');
+                log('🎉 Import lengkap! Semua data telah diimport ke Firestore.');
+                log('🔒 PENTING: Jangan lupa pulihkan production rules selepas ini!');
+                updateProgress(100, 'Selesai');
+            } catch (error) {
+                setStatus(`❌ Import gagal: ${error.message}`, 'error');
+                log(`❌ Error: ${error.message}`);
+            }
+        };
+
+        window.clearAll = async function() {
+            if (!confirm('Adakah anda pasti ingin memadam semua data? Tindakan ini tidak boleh dibatalkan.')) {
+                return;
+            }
+            
+            try {
+                setStatus('Memadam semua data...', 'info');
+                log('🗑️ Memulakan proses padam data...');
+                
+                // Delete all collections
+                const collections = ['users', 'locations', 'files', 'borrowing_records', 'activity_logs'];
+                
+                for (const collectionName of collections) {
+                    const snapshot = await getDocs(collection(db, collectionName));
+                    let count = 0;
+                    
+                    for (const docSnap of snapshot.docs) {
+                        await deleteDoc(doc(db, collectionName, docSnap.id));
+                        count++;
+                    }
+                    
+                    log(`✅ Deleted ${count} documents from ${collectionName}`);
+                }
+                
+                setStatus('✅ Semua data telah dipadam!', 'success');
+                log('🎉 Proses padam selesai!');
+                updateProgress(0, '0%');
+            } catch (error) {
+                setStatus(`❌ Padam data gagal: ${error.message}`, 'error');
+                log(`❌ Error: ${error.message}`);
+            }
+        };
+
+        // Initialize
+        log('✅ Import page loaded and ready!');
+        log('🔥 Firebase initialized successfully');
+    </script>
+</body>
+</html>

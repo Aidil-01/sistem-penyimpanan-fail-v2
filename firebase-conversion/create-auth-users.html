@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPF Tongod - Create Authentication Users</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .auth-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        button:hover {
+            background: #2980b9;
+        }
+        button.danger {
+            background: #e74c3c;
+        }
+        button.danger:hover {
+            background: #c0392b;
+        }
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background: #cce5ff;
+            color: #004085;
+            border: 1px solid #99d6ff;
+        }
+        .warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        .credentials-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        .credentials-table th, .credentials-table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        .credentials-table th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+        .credentials-table tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        .password-field {
+            font-family: 'Courier New', monospace;
+            background: #f8f9fa;
+            padding: 4px 8px;
+            border-radius: 3px;
+            border: 1px solid #ddd;
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .instruction-box {
+            background: #e8f5e8;
+            border: 1px solid #28a745;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 SPF Tongod - Create Authentication Users</h1>
+        
+        <div class="instruction-box">
+            <h3>📋 Instructions:</h3>
+            <p><strong>Firebase Console Method (Recommended):</strong></p>
+            <ol>
+                <li>Go to <a href="https://console.firebase.google.com/project/sistem-penyimpanan-fail-tongod/authentication/users" target="_blank">Firebase Console - Authentication</a></li>
+                <li>Click "Add user" for each account below</li>
+                <li>Copy the email and password from the table</li>
+                <li>Set the User UID to match the Firestore document ID</li>
+            </ol>
+            <p><strong>Alternative:</strong> Use the buttons below (requires Firebase Admin SDK setup)</p>
+        </div>
+
+        <div class="auth-section">
+            <h3>📊 Status</h3>
+            <div id="status" class="status info">Ready to create authentication users...</div>
+        </div>
+
+        <div class="auth-section">
+            <h3>👤 User Accounts to Create</h3>
+            <p>Create these accounts in Firebase Console Authentication:</p>
+            
+            <table class="credentials-table">
+                <thead>
+                    <tr>
+                        <th>User UID</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Password</th>
+                        <th>Role</th>
+                        <th>Department</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr style="background-color: #ffe6e6;">
+                        <td><code>admin001</code></td>
+                        <td>Datuk Ahmad bin Rahman</td>
+                        <td>datuk.ahmad@tongod.sabah.gov.my</td>
+                        <td><span class="password-field">Admin123!@#</span></td>
+                        <td><strong>Admin</strong></td>
+                        <td>Pentadbiran Utama</td>
+                    </tr>
+                    <tr style="background-color: #ffe6e6;">
+                        <td><code>admin002</code></td>
+                        <td>Puan Siti Hajar binti Abdullah</td>
+                        <td>siti.hajar@tongod.sabah.gov.my</td>
+                        <td><span class="password-field">Admin456!@#</span></td>
+                        <td><strong>Admin</strong></td>
+                        <td>Pentadbiran Utama</td>
+                    </tr>
+                    <tr style="background-color: #e6f3ff;">
+                        <td><code>staff001</code></td>
+                        <td>Encik Muhammad Faizal bin Omar</td>
+                        <td>faizal@tongod.sabah.gov.my</td>
+                        <td><span class="password-field">Staff123!@#</span></td>
+                        <td>Staff Jabatan</td>
+                        <td>Pentadbiran</td>
+                    </tr>
+                    <tr style="background-color: #e6f3ff;">
+                        <td><code>staff002</code></td>
+                        <td>Puan Norliza binti Kassim</td>
+                        <td>norliza@tongod.sabah.gov.my</td>
+                        <td><span class="password-field">Staff456!@#</span></td>
+                        <td>Staff Jabatan</td>
+                        <td>Kewangan</td>
+                    </tr>
+                    <tr style="background-color: #e6f3ff;">
+                        <td><code>staff003</code></td>
+                        <td>Encik Roslan bin Sulaiman</td>
+                        <td>roslan@tongod.sabah.gov.my</td>
+                        <td><span class="password-field">Staff789!@#</span></td>
+                        <td>Staff Jabatan</td>
+                        <td>Pembangunan</td>
+                    </tr>
+                    <tr style="background-color: #e6f3ff;">
+                        <td><code>staff004</code></td>
+                        <td>Puan Azlina binti Mohamad</td>
+                        <td>azlina@tongod.sabah.gov.my</td>
+                        <td><span class="password-field">Staff101!@#</span></td>
+                        <td>Staff Jabatan</td>
+                        <td>Kesihatan</td>
+                    </tr>
+                    <tr style="background-color: #f0f8ff;">
+                        <td><code>staff005</code></td>
+                        <td>Encik Jeffri anak Jimbai</td>
+                        <td>jeffri@tongod.sabah.gov.my</td>
+                        <td><span class="password-field">Helper123!@#</span></td>
+                        <td>Staff Pembantu</td>
+                        <td>Pentadbiran</td>
+                    </tr>
+                    <tr style="background-color: #f0f8ff;">
+                        <td><code>staff006</code></td>
+                        <td>Cik Mariam binti Yusof</td>
+                        <td>mariam@tongod.sabah.gov.my</td>
+                        <td><span class="password-field">Helper456!@#</span></td>
+                        <td>Staff Pembantu</td>
+                        <td>Kewangan</td>
+                    </tr>
+                    <tr style="background-color: #f9f9f9;">
+                        <td><code>user001</code></td>
+                        <td>Encik Ramli bin Ibrahim</td>
+                        <td>ramli@tongod.sabah.gov.my</td>
+                        <td><span class="password-field">User123!@#</span></td>
+                        <td>View Only</td>
+                        <td>Pentadbiran</td>
+                    </tr>
+                    <tr style="background-color: #f9f9f9;">
+                        <td><code>user002</code></td>
+                        <td>Cik Salmah binti Daud</td>
+                        <td>salmah@tongod.sabah.gov.my</td>
+                        <td><span class="password-field">User456!@#</span></td>
+                        <td>View Only</td>
+                        <td>Kewangan</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="auth-section">
+            <h3>🚀 Quick Actions</h3>
+            <button onclick="openFirebaseConsole()">🌐 Open Firebase Console</button>
+            <button onclick="copyCredentials()">📋 Copy All Credentials</button>
+            <button onclick="testLogin()">🧪 Test Login</button>
+            <button onclick="showDetailedSteps()" class="danger">📖 Show Detailed Steps</button>
+        </div>
+
+        <div class="auth-section">
+            <h3>⚡ Quick Test Credentials</h3>
+            <div style="background: #e8f5e8; padding: 15px; border-radius: 5px;">
+                <h4>🔑 Admin Login:</h4>
+                <p><strong>Email:</strong> datuk.ahmad@tongod.sabah.gov.my</p>
+                <p><strong>Password:</strong> <code>Admin123!@#</code></p>
+                
+                <h4>🔑 Staff Login:</h4>
+                <p><strong>Email:</strong> faizal@tongod.sabah.gov.my</p>
+                <p><strong>Password:</strong> <code>Staff123!@#</code></p>
+                
+                <h4>🔑 View Only Login:</h4>
+                <p><strong>Email:</strong> ramli@tongod.sabah.gov.my</p>
+                <p><strong>Password:</strong> <code>User123!@#</code></p>
+            </div>
+        </div>
+
+        <div class="auth-section" id="detailedSteps" style="display: none;">
+            <h3>📖 Detailed Setup Steps</h3>
+            <div class="instruction-box">
+                <h4>Step 1: Open Firebase Console</h4>
+                <p>1. Go to <a href="https://console.firebase.google.com/project/sistem-penyimpanan-fail-tongod" target="_blank">Firebase Console</a></p>
+                <p>2. Click "Authentication" in the left sidebar</p>
+                <p>3. Click "Users" tab</p>
+                
+                <h4>Step 2: Create Users</h4>
+                <p>For each user in the table above:</p>
+                <ol>
+                    <li>Click "Add user" button</li>
+                    <li>Enter the email address</li>
+                    <li>Enter the password</li>
+                    <li>Click "Add user"</li>
+                    <li><strong>IMPORTANT:</strong> After creating, click on the user and set the User UID to match the table (e.g., admin001, staff001, etc.)</li>
+                </ol>
+                
+                <h4>Step 3: Verify Connection</h4>
+                <p>The User UID in Firebase Auth must match the document ID in Firestore users collection.</p>
+                
+                <h4>Step 4: Test Login</h4>
+                <p>Go to <a href="https://sistem-penyimpanan-fail-tongod.web.app" target="_blank">SPF Tongod App</a> and test login with any credentials above.</p>
+            </div>
+        </div>
+
+        <div class="auth-section">
+            <h3>📝 Log</h3>
+            <pre id="authLog">Ready to create authentication users...\n</pre>
+        </div>
+    </div>
+
+    <script>
+        function log(message) {
+            const logElement = document.getElementById('authLog');
+            const timestamp = new Date().toLocaleString();
+            logElement.textContent += `[${timestamp}] ${message}\n`;
+            logElement.scrollTop = logElement.scrollHeight;
+            console.log(message);
+        }
+
+        function setStatus(message, type = 'info') {
+            const statusElement = document.getElementById('status');
+            statusElement.textContent = message;
+            statusElement.className = `status ${type}`;
+        }
+
+        function openFirebaseConsole() {
+            window.open('https://console.firebase.google.com/project/sistem-penyimpanan-fail-tongod/authentication/users', '_blank');
+            log('🌐 Opened Firebase Console - Authentication');
+        }
+
+        function copyCredentials() {
+            const credentials = `SPF Tongod - Login Credentials
+
+🔑 ADMIN ACCOUNTS:
+Email: datuk.ahmad@tongod.sabah.gov.my
+Password: Admin123!@#
+UID: admin001
+
+Email: siti.hajar@tongod.sabah.gov.my  
+Password: Admin456!@#
+UID: admin002
+
+🔑 STAFF ACCOUNTS:
+Email: faizal@tongod.sabah.gov.my
+Password: Staff123!@#
+UID: staff001
+
+Email: norliza@tongod.sabah.gov.my
+Password: Staff456!@#
+UID: staff002
+
+Email: roslan@tongod.sabah.gov.my
+Password: Staff789!@#
+UID: staff003
+
+🔑 VIEW ONLY ACCOUNTS:
+Email: ramli@tongod.sabah.gov.my
+Password: User123!@#
+UID: user001
+
+Email: salmah@tongod.sabah.gov.my
+Password: User456!@#
+UID: user002
+
+⚠️ IMPORTANT: Set User UID in Firebase Console to match the UID shown above.`;
+
+            navigator.clipboard.writeText(credentials).then(() => {
+                setStatus('✅ Credentials copied to clipboard!', 'success');
+                log('📋 All credentials copied to clipboard');
+            }).catch(() => {
+                setStatus('❌ Failed to copy credentials', 'error');
+            });
+        }
+
+        function testLogin() {
+            window.open('https://sistem-penyimpanan-fail-tongod.web.app', '_blank');
+            log('🧪 Opened SPF Tongod app for testing');
+            setStatus('Test the login with any credentials from the table above', 'info');
+        }
+
+        function showDetailedSteps() {
+            const stepsDiv = document.getElementById('detailedSteps');
+            if (stepsDiv.style.display === 'none') {
+                stepsDiv.style.display = 'block';
+                log('📖 Showing detailed setup steps');
+            } else {
+                stepsDiv.style.display = 'none';
+                log('📖 Hiding detailed setup steps');
+            }
+        }
+
+        // Initialize
+        log('✅ Authentication setup page loaded');
+        log('🔐 Ready to create Firebase Authentication users');
+        log('👆 Click "Open Firebase Console" to start creating users');
+    </script>
+</body>
+</html>

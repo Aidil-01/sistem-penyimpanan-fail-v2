@@ -1,7 +1,7 @@
 {
   "name": "Sistem Penyimpanan Fail Tongod",
   "short_name": "SPF Tongod",
-  "description": "File storage system for office documents - Firebase PWA",
+  "description": "Progressive Web App untuk pengurusan fail dan dokumen Pejabat Daerah Tongod",
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait",

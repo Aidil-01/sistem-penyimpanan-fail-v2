@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPF Tongod - PWA Icon Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .icon-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        button:hover {
+            background: #2980b9;
+        }
+        button.success {
+            background: #27ae60;
+        }
+        button.danger {
+            background: #e74c3c;
+        }
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background: #cce5ff;
+            color: #004085;
+            border: 1px solid #99d6ff;
+        }
+        .warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        .icon-preview {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin: 15px 0;
+        }
+        .icon-item {
+            text-align: center;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 5px;
+            background: #f8f9fa;
+        }
+        .icon-item img {
+            display: block;
+            margin: 0 auto 5px;
+            border: 1px solid #ccc;
+        }
+        canvas {
+            border: 1px solid #ddd;
+            margin: 5px;
+        }
+        .upload-area {
+            border: 2px dashed #ccc;
+            padding: 20px;
+            text-align: center;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+        .upload-area.dragover {
+            border-color: #3498db;
+            background: #f0f8ff;
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 SPF Tongod - PWA Icon Generator</h1>
+        
+        <div class="icon-section">
+            <h3>📊 Status</h3>
+            <div id="status" class="status info">Ready to generate PWA icons...</div>
+        </div>
+
+        <div class="icon-section">
+            <h3>📁 Upload Your Icon</h3>
+            <div class="upload-area" id="uploadArea">
+                <p>🖼️ Drag and drop your icon.png file here, or click to browse</p>
+                <input type="file" id="iconInput" accept="image/*" style="display: none;">
+                <button onclick="document.getElementById('iconInput').click()">Browse Icon File</button>
+            </div>
+            <div id="sourcePreview"></div>
+        </div>
+
+        <div class="icon-section">
+            <h3>🔧 PWA Icon Sizes</h3>
+            <p>Generate these required PWA icon sizes:</p>
+            <ul>
+                <li><strong>144x144</strong> - Android home screen</li>
+                <li><strong>192x192</strong> - Android splash screen</li>
+                <li><strong>512x512</strong> - High resolution PWA icon</li>
+                <li><strong>72x72</strong> - Small devices</li>
+                <li><strong>96x96</strong> - Standard size</li>
+                <li><strong>128x128</strong> - Medium size</li>
+                <li><strong>256x256</strong> - Large size</li>
+            </ul>
+            
+            <button onclick="generateIcons()" id="generateBtn">🎨 Generate All PWA Icons</button>
+            <button onclick="downloadIcons()" id="downloadBtn" style="display: none;" class="success">📥 Download Icons</button>
+        </div>
+
+        <div class="icon-section">
+            <h3>👀 Generated Icons Preview</h3>
+            <div id="iconPreview" class="icon-preview"></div>
+        </div>
+
+        <div class="icon-section">
+            <h3>📋 Generated manifest.json</h3>
+            <pre id="manifestCode">// Generated manifest.json will appear here</pre>
+            <button onclick="copyManifest()" id="manifestBtn" style="display: none;">📋 Copy Manifest</button>
+        </div>
+
+        <div class="icon-section">
+            <h3>📝 Log</h3>
+            <pre id="iconLog">Ready to generate PWA icons...\n</pre>
+        </div>
+    </div>
+
+    <script>
+        let sourceImage = null;
+        let generatedIcons = {};
+
+        const iconSizes = [72, 96, 128, 144, 192, 256, 512];
+
+        function log(message) {
+            const logElement = document.getElementById('iconLog');
+            const timestamp = new Date().toLocaleString();
+            logElement.textContent += `[${timestamp}] ${message}\n`;
+            logElement.scrollTop = logElement.scrollHeight;
+            console.log(message);
+        }
+
+        function setStatus(message, type = 'info') {
+            const statusElement = document.getElementById('status');
+            statusElement.textContent = message;
+            statusElement.className = `status ${type}`;
+        }
+
+        // File upload handling
+        const uploadArea = document.getElementById('uploadArea');
+        const iconInput = document.getElementById('iconInput');
+
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+
+        uploadArea.addEventListener('click', () => {
+            iconInput.click();
+        });
+
+        iconInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        function handleFile(file) {
+            if (!file.type.startsWith('image/')) {
+                setStatus('❌ Please select an image file', 'error');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    sourceImage = img;
+                    showSourcePreview(img, file.name);
+                    setStatus(`✅ Loaded: ${file.name} (${img.width}x${img.height})`, 'success');
+                    log(`📁 Loaded source image: ${file.name} - ${img.width}x${img.height}px`);
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function showSourcePreview(img, fileName) {
+            const preview = document.getElementById('sourcePreview');
+            preview.innerHTML = `
+                <div style="text-align: center; margin: 15px 0;">
+                    <h4>📷 Source Image: ${fileName}</h4>
+                    <img src="${img.src}" style="max-width: 200px; max-height: 200px; border: 1px solid #ccc;">
+                    <p>Original Size: ${img.width} x ${img.height}px</p>
+                </div>
+            `;
+        }
+
+        function generateIcons() {
+            if (!sourceImage) {
+                setStatus('❌ Please upload an icon file first', 'error');
+                return;
+            }
+
+            setStatus('🎨 Generating PWA icons...', 'info');
+            log('🚀 Starting icon generation process...');
+
+            const previewContainer = document.getElementById('iconPreview');
+            previewContainer.innerHTML = '';
+            generatedIcons = {};
+
+            iconSizes.forEach(size => {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                
+                canvas.width = size;
+                canvas.height = size;
+
+                // Draw the resized image
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'high';
+                ctx.drawImage(sourceImage, 0, 0, size, size);
+
+                // Convert to blob and store
+                canvas.toBlob((blob) => {
+                    generatedIcons[size] = blob;
+                    
+                    // Create preview
+                    const iconItem = document.createElement('div');
+                    iconItem.className = 'icon-item';
+                    iconItem.innerHTML = `
+                        <img src="${canvas.toDataURL()}" width="${Math.min(size, 64)}" height="${Math.min(size, 64)}">
+                        <div>${size}x${size}</div>
+                        <small>${(blob.size / 1024).toFixed(1)}KB</small>
+                    `;
+                    previewContainer.appendChild(iconItem);
+
+                    log(`✅ Generated ${size}x${size} icon (${(blob.size / 1024).toFixed(1)}KB)`);
+                    
+                    if (Object.keys(generatedIcons).length === iconSizes.length) {
+                        generateManifest();
+                        document.getElementById('downloadBtn').style.display = 'inline-block';
+                        setStatus('✅ All PWA icons generated successfully!', 'success');
+                        log('🎉 Icon generation complete!');
+                    }
+                }, 'image/png');
+            });
+        }
+
+        function generateManifest() {
+            const manifest = {
+                "name": "Sistem Penyimpanan Fail Tongod",
+                "short_name": "SPF Tongod",
+                "description": "Progressive Web App untuk pengurusan fail dan dokumen Pejabat Daerah Tongod",
+                "start_url": "/",
+                "display": "standalone",
+                "background_color": "#ffffff",
+                "theme_color": "#2c5aa0",
+                "orientation": "portrait-primary",
+                "categories": ["productivity", "business", "government"],
+                "lang": "ms-MY",
+                "scope": "/",
+                "icons": iconSizes.map(size => ({
+                    "src": `assets/icons/icon-${size}x${size}.png`,
+                    "sizes": `${size}x${size}`,
+                    "type": "image/png",
+                    "purpose": size >= 192 ? "any maskable" : "any"
+                }))
+            };
+
+            const manifestCode = document.getElementById('manifestCode');
+            manifestCode.textContent = JSON.stringify(manifest, null, 2);
+            document.getElementById('manifestBtn').style.display = 'inline-block';
+            log('📋 Generated manifest.json with icon references');
+        }
+
+        function copyManifest() {
+            const manifestCode = document.getElementById('manifestCode').textContent;
+            navigator.clipboard.writeText(manifestCode).then(() => {
+                setStatus('✅ Manifest copied to clipboard!', 'success');
+                log('📋 Manifest.json copied to clipboard');
+            }).catch(() => {
+                setStatus('❌ Failed to copy manifest', 'error');
+            });
+        }
+
+        function downloadIcons() {
+            if (Object.keys(generatedIcons).length === 0) {
+                setStatus('❌ No icons to download', 'error');
+                return;
+            }
+
+            setStatus('📥 Preparing download...', 'info');
+            log('📦 Preparing icon download package...');
+
+            // Create a zip-like download by creating individual downloads
+            // In a real implementation, you'd want to use JSZip library
+            
+            iconSizes.forEach((size, index) => {
+                setTimeout(() => {
+                    const blob = generatedIcons[size];
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `icon-${size}x${size}.png`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    log(`📥 Downloaded icon-${size}x${size}.png`);
+                }, index * 200); // Stagger downloads
+            });
+
+            // Also download the manifest
+            setTimeout(() => {
+                const manifestBlob = new Blob([document.getElementById('manifestCode').textContent], { type: 'application/json' });
+                const url = URL.createObjectURL(manifestBlob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'manifest.json';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                log('📥 Downloaded manifest.json');
+                
+                setStatus('✅ All files downloaded! Place icons in assets/icons/ directory', 'success');
+            }, iconSizes.length * 200 + 500);
+        }
+
+        // Initialize
+        log('✅ PWA Icon Generator loaded');
+        log('📁 Please upload your icon.png file to start');
+
+        // Auto-load the icon if we can fetch it
+        fetch('../icon/icon.png')
+            .then(response => response.blob())
+            .then(blob => {
+                const file = new File([blob], 'icon.png', { type: 'image/png' });
+                handleFile(file);
+                log('🔍 Auto-loaded icon.png from project directory');
+            })
+            .catch(() => {
+                log('ℹ️ Could not auto-load icon.png - please upload manually');
+            });
+    </script>
+</body>
+</html>
