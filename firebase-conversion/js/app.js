@@ -10,6 +10,7 @@ class App {
 
     init() {
         this.setupNavigation();
+        this.setupSidebar();
         this.setupOfflineIndicator();
         this.loadPage('dashboard');
     }
@@ -24,8 +25,206 @@ class App {
                 // Update active state
                 document.querySelectorAll('#navigationMenu .nav-link').forEach(l => l.classList.remove('active'));
                 link.classList.add('active');
+                
+                // Close sidebar on mobile after navigation
+                this.closeSidebar();
             });
         });
+    }
+
+    setupSidebar() {
+        const sidebar = document.getElementById('sidebarMenu');
+        const overlay = document.getElementById('sidebarOverlay');
+        const closeBtn = document.getElementById('sidebarCloseBtn');
+        const hamburgerBtn = document.querySelector('.navbar-toggler');
+        const mainContent = document.querySelector('.main-content');
+
+        // Hamburger button click - open sidebar
+        if (hamburgerBtn) {
+            hamburgerBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.openSidebar();
+            });
+        }
+
+        // Close button click
+        if (closeBtn) {
+            closeBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.closeSidebar();
+            });
+        }
+
+        // Overlay click - close sidebar
+        if (overlay) {
+            overlay.addEventListener('click', () => {
+                this.closeSidebar();
+            });
+        }
+
+        // Click outside sidebar to close (mobile)
+        document.addEventListener('click', (e) => {
+            if (window.innerWidth <= 768) {
+                const isClickInsideSidebar = sidebar && sidebar.contains(e.target);
+                const isClickOnHamburger = hamburgerBtn && hamburgerBtn.contains(e.target);
+                
+                if (!isClickInsideSidebar && !isClickOnHamburger && sidebar && sidebar.classList.contains('show')) {
+                    this.closeSidebar();
+                }
+            }
+        });
+
+        // Handle swipe gestures on mobile
+        this.setupSwipeGestures();
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 768) {
+                this.closeSidebar();
+            }
+        });
+
+        // Prevent body scroll when sidebar is open on mobile
+        this.preventBodyScroll();
+    }
+
+    openSidebar() {
+        const sidebar = document.getElementById('sidebarMenu');
+        const overlay = document.getElementById('sidebarOverlay');
+        const mainContent = document.querySelector('.main-content');
+
+        if (sidebar) {
+            sidebar.classList.add('show');
+            if (overlay) {
+                overlay.classList.remove('d-none');
+                overlay.classList.add('show');
+            }
+            if (mainContent && window.innerWidth <= 768) {
+                mainContent.classList.add('sidebar-open');
+            }
+            
+            // Prevent body scrolling on mobile
+            if (window.innerWidth <= 768) {
+                document.body.style.overflow = 'hidden';
+            }
+        }
+    }
+
+    closeSidebar() {
+        const sidebar = document.getElementById('sidebarMenu');
+        const overlay = document.getElementById('sidebarOverlay');
+        const mainContent = document.querySelector('.main-content');
+
+        if (sidebar) {
+            sidebar.classList.remove('show');
+            if (overlay) {
+                overlay.classList.remove('show');
+                setTimeout(() => {
+                    overlay.classList.add('d-none');
+                }, 300);
+            }
+            if (mainContent) {
+                mainContent.classList.remove('sidebar-open');
+            }
+            
+            // Restore body scrolling
+            document.body.style.overflow = '';
+        }
+    }
+
+    setupSwipeGestures() {
+        let startX = 0;
+        let currentX = 0;
+        let isSwping = false;
+        
+        const mainContent = document.querySelector('.main-content');
+        const sidebar = document.getElementById('sidebarMenu');
+
+        if (!mainContent || !sidebar) return;
+
+        // Touch start
+        mainContent.addEventListener('touchstart', (e) => {
+            if (window.innerWidth <= 768) {
+                startX = e.touches[0].clientX;
+                isSwping = true;
+            }
+        }, { passive: true });
+
+        // Touch move
+        mainContent.addEventListener('touchmove', (e) => {
+            if (!isSwping || window.innerWidth > 768) return;
+            
+            currentX = e.touches[0].clientX;
+            const diffX = currentX - startX;
+            
+            // Prevent default scrolling when swiping horizontally
+            if (Math.abs(diffX) > 10) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        // Touch end
+        mainContent.addEventListener('touchend', (e) => {
+            if (!isSwping || window.innerWidth > 768) return;
+            
+            const diffX = currentX - startX;
+            const threshold = 50;
+            
+            // Swipe right to open (from left edge)
+            if (diffX > threshold && startX < 50 && !sidebar.classList.contains('show')) {
+                this.openSidebar();
+            }
+            // Swipe left to close
+            else if (diffX < -threshold && sidebar.classList.contains('show')) {
+                this.closeSidebar();
+            }
+            
+            isSwping = false;
+            startX = 0;
+            currentX = 0;
+        }, { passive: true });
+
+        // Also handle swipe on sidebar itself
+        sidebar.addEventListener('touchstart', (e) => {
+            if (window.innerWidth <= 768) {
+                startX = e.touches[0].clientX;
+                isSwping = true;
+            }
+        }, { passive: true });
+
+        sidebar.addEventListener('touchmove', (e) => {
+            if (!isSwping || window.innerWidth > 768) return;
+            currentX = e.touches[0].clientX;
+        }, { passive: true });
+
+        sidebar.addEventListener('touchend', (e) => {
+            if (!isSwping || window.innerWidth > 768) return;
+            
+            const diffX = currentX - startX;
+            const threshold = 50;
+            
+            // Swipe left to close sidebar
+            if (diffX < -threshold) {
+                this.closeSidebar();
+            }
+            
+            isSwping = false;
+            startX = 0;
+            currentX = 0;
+        }, { passive: true });
+    }
+
+    preventBodyScroll() {
+        // Prevent bounce scrolling on iOS when sidebar is open
+        document.addEventListener('touchmove', (e) => {
+            const sidebar = document.getElementById('sidebarMenu');
+            if (sidebar && sidebar.classList.contains('show') && window.innerWidth <= 768) {
+                // Allow scrolling within sidebar
+                if (!sidebar.contains(e.target)) {
+                    e.preventDefault();
+                }
+            }
+        }, { passive: false });
     }
 
     setupOfflineIndicator() {
