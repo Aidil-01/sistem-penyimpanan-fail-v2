@@ -1,7 +1,7 @@
 // Service Worker for PWA functionality
-const CACHE_NAME = 'spf-tongod-v1.0.0';
-const STATIC_CACHE = 'spf-static-v1.0.0';
-const DYNAMIC_CACHE = 'spf-dynamic-v1.0.0';
+const CACHE_NAME = 'spf-tongod-v1.1.0';
+const STATIC_CACHE = 'spf-static-v1.1.0';
+const DYNAMIC_CACHE = 'spf-dynamic-v1.1.0';
 
 // Files to cache immediately (Static Assets)
 const STATIC_FILES = [

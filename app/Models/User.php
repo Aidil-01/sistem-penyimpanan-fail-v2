@@ -7,10 +7,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable, HasRoles;
 
     protected $fillable = [
         'name',
@@ -68,29 +69,24 @@ class User extends Authenticatable
         return $this->hasMany(ActivityLog::class);
     }
 
-    public function hasRole($role)
-    {
-        return $this->role === $role;
-    }
-
     public function canManageFiles()
     {
-        return in_array($this->role, ['admin', 'staff_jabatan', 'staff_pembantu']);
+        return $this->can('manage_files');
     }
 
     public function canManageUsers()
     {
-        return $this->role === 'admin';
+        return $this->can('manage_users');
     }
 
     public function canBorrowFiles()
     {
-        return in_array($this->role, ['admin', 'staff_jabatan', 'staff_pembantu']);
+        return $this->can('borrow_files');
     }
 
     public function canViewReports()
     {
-        return in_array($this->role, ['admin', 'staff_jabatan']);
+        return $this->can('view_reports');
     }
 
     public function getRoleDisplayAttribute()

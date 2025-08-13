@@ -1,12 +1,14 @@
 // Authentication module
 import { auth, db, googleProvider } from './firebase-config.js';
 import { 
-    signInWithEmailAndPassword, 
+    signInWithEmailAndPassword,
+    createUserWithEmailAndPassword,
     signInWithPopup,
     signOut, 
     onAuthStateChanged,
     sendPasswordResetEmail,
-    updateProfile
+    updateProfile,
+    sendEmailVerification
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 import { 
     doc, 
@@ -117,6 +119,49 @@ class AuthManager {
         }
     }
 
+    async register(email, password, name, department = 'Pentadbiran', role = 'user_view') {
+        try {
+            // Create user account
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            const user = userCredential.user;
+
+            // Update display name
+            await updateProfile(user, {
+                displayName: name
+            });
+
+            // Send email verification
+            await sendEmailVerification(user);
+
+            // Create user profile in Firestore
+            const userProfile = {
+                name: name,
+                email: email,
+                role: role,
+                department: department,
+                position: 'Pegawai',
+                phone: '',
+                is_active: true,
+                email_verified: false,
+                created_at: serverTimestamp(),
+                updated_at: serverTimestamp()
+            };
+
+            await setDoc(doc(db, 'users', user.uid), userProfile);
+
+            // Log registration activity
+            await this.logActivity('register', `Pengguna baharu ${email} didaftarkan`);
+
+            return {
+                user: user,
+                message: 'Akaun berjaya dibuat. Sila semak e-mel untuk pengesahan.'
+            };
+        } catch (error) {
+            console.error('Registration error:', error);
+            throw this.getAuthErrorMessage(error.code);
+        }
+    }
+
     async loginWithGoogle() {
         try {
             const result = await signInWithPopup(auth, googleProvider);
@@ -181,11 +226,18 @@ class AuthManager {
             'auth/user-not-found': 'Pengguna tidak dijumpai',
             'auth/wrong-password': 'Kata laluan tidak betul',
             'auth/invalid-email': 'Format e-mel tidak sah',
+            'auth/invalid-credential': 'E-mel atau kata laluan tidak betul',
             'auth/user-disabled': 'Akaun pengguna telah dinonaktifkan',
             'auth/too-many-requests': 'Terlalu banyak percubaan. Cuba lagi kemudian',
-            'auth/network-request-failed': 'Ralat rangkaian. Periksa sambungan internet'
+            'auth/network-request-failed': 'Ralat rangkaian. Periksa sambungan internet',
+            'auth/email-already-in-use': 'E-mel ini telah digunakan',
+            'auth/weak-password': 'Kata laluan terlalu lemah. Minimum 6 aksara',
+            'auth/popup-closed-by-user': 'Log masuk Google dibatalkan',
+            'auth/popup-blocked': 'Popup disekat. Sila aktifkan popup untuk log masuk Google',
+            'auth/cancelled-popup-request': 'Permintaan log masuk dibatalkan',
+            'auth/operation-not-allowed': 'Kaedah log masuk ini tidak dibenarkan'
         };
-        return errorMessages[errorCode] || 'Ralat tidak diketahui berlaku';
+        return errorMessages[errorCode] || `Ralat tidak diketahui: ${errorCode}`;
     }
 
     updateUserDisplay() {
@@ -308,9 +360,31 @@ class AuthManager {
 // Initialize auth manager
 const authManager = new AuthManager();
 
-// Setup login form
+// Setup authentication forms
 document.addEventListener('DOMContentLoaded', () => {
+    // Form switching
+    const loginMode = document.getElementById('loginMode');
+    const registerMode = document.getElementById('registerMode');
     const loginForm = document.getElementById('loginForm');
+    const registerForm = document.getElementById('registerForm');
+
+    if (loginMode && registerMode && loginForm && registerForm) {
+        loginMode.addEventListener('change', () => {
+            if (loginMode.checked) {
+                loginForm.classList.remove('d-none');
+                registerForm.classList.add('d-none');
+            }
+        });
+
+        registerMode.addEventListener('change', () => {
+            if (registerMode.checked) {
+                registerForm.classList.remove('d-none');
+                loginForm.classList.add('d-none');
+            }
+        });
+    }
+
+    // Login form
     if (loginForm) {
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -331,6 +405,69 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Re-enable submit button
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = 'Log Masuk';
+            }
+        });
+    }
+
+    // Registration form
+    if (registerForm) {
+        registerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const name = document.getElementById('regName').value;
+            const email = document.getElementById('regEmail').value;
+            const password = document.getElementById('regPassword').value;
+            const confirmPassword = document.getElementById('regConfirmPassword').value;
+            const department = document.getElementById('regDepartment').value;
+            const submitBtn = registerForm.querySelector('button[type="submit"]');
+
+            // Validate passwords match
+            if (password !== confirmPassword) {
+                authManager.showAlert('Kata laluan tidak sepadan', 'error');
+                return;
+            }
+            
+            // Disable submit button
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Mendaftar...';
+            
+            try {
+                const result = await authManager.register(email, password, name, department);
+                authManager.showAlert(result.message, 'success');
+                
+                // Switch back to login form
+                loginMode.checked = true;
+                registerForm.classList.add('d-none');
+                loginForm.classList.remove('d-none');
+                
+                // Clear registration form
+                registerForm.reset();
+            } catch (error) {
+                authManager.showAlert(error, 'error');
+            } finally {
+                // Re-enable submit button
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Daftar Akaun';
+            }
+        });
+    }
+
+    // Forgot password
+    const forgotPasswordBtn = document.getElementById('forgotPasswordBtn');
+    if (forgotPasswordBtn) {
+        forgotPasswordBtn.addEventListener('click', async () => {
+            const email = document.getElementById('email').value;
+            
+            if (!email) {
+                authManager.showAlert('Sila masukkan e-mel terlebih dahulu', 'warning');
+                return;
+            }
+            
+            try {
+                const message = await authManager.resetPassword(email);
+                authManager.showAlert(message, 'success');
+            } catch (error) {
+                authManager.showAlert(error, 'error');
             }
         });
     }
@@ -369,6 +506,24 @@ document.addEventListener('DOMContentLoaded', () => {
         } finally {
             googleBtn.disabled = false;
             googleBtn.innerHTML = '<i class="fab fa-google me-2"></i>Log masuk dengan Google';
+        }
+    });
+
+    // Setup Google register button
+    document.getElementById('googleRegisterBtn')?.addEventListener('click', async (e) => {
+        e.preventDefault();
+        
+        const googleBtn = e.target;
+        googleBtn.disabled = true;
+        googleBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Daftar dengan Google...';
+        
+        try {
+            await authManager.loginWithGoogle();
+        } catch (error) {
+            authManager.showAlert(error, 'error');
+        } finally {
+            googleBtn.disabled = false;
+            googleBtn.innerHTML = '<i class="fab fa-google me-2"></i>Daftar dengan Google';
         }
     });
 });

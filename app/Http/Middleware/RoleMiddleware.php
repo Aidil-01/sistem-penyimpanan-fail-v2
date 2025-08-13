@@ -20,7 +20,16 @@ class RoleMiddleware
             return redirect('/login')->with('error', 'Akaun anda telah dinonaktifkan.');
         }
 
-        if (!in_array($user->role, $roles)) {
+        // Check if user has any of the required roles
+        $hasRole = false;
+        foreach ($roles as $role) {
+            if ($user->hasRole($role)) {
+                $hasRole = true;
+                break;
+            }
+        }
+
+        if (!$hasRole) {
             abort(403, 'Anda tidak mempunyai kebenaran untuk mengakses halaman ini.');
         }
 

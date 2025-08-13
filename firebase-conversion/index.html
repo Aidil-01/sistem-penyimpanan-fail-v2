@@ -54,6 +54,17 @@
                                 <p class="text-muted">Sistem Penyimpanan Fail</p>
                             </div>
                             
+                            <!-- Login/Register Toggle -->
+                            <div class="text-center mb-3">
+                                <div class="btn-group w-100" role="group">
+                                    <input type="radio" class="btn-check" name="authMode" id="loginMode" autocomplete="off" checked>
+                                    <label class="btn btn-outline-primary" for="loginMode">Log Masuk</label>
+                                    
+                                    <input type="radio" class="btn-check" name="authMode" id="registerMode" autocomplete="off">
+                                    <label class="btn btn-outline-primary" for="registerMode">Daftar</label>
+                                </div>
+                            </div>
+
                             <!-- Login Form -->
                             <form id="loginForm">
                                 <div class="mb-3">
@@ -66,11 +77,57 @@
                                 </div>
                                 <button type="submit" class="btn btn-primary w-100 mb-3">Log Masuk</button>
                                 
+                                <div class="text-center mb-3">
+                                    <button type="button" class="btn btn-link p-0" id="forgotPasswordBtn">
+                                        Lupa kata laluan?
+                                    </button>
+                                </div>
+                                
                                 <div class="text-center">
                                     <p class="text-muted">atau</p>
                                     <button type="button" id="googleLoginBtn" class="btn btn-outline-danger w-100">
                                         <i class="fab fa-google me-2"></i>
                                         Log masuk dengan Google
+                                    </button>
+                                </div>
+                            </form>
+
+                            <!-- Registration Form -->
+                            <form id="registerForm" class="d-none">
+                                <div class="mb-3">
+                                    <label for="regName" class="form-label">Nama Penuh</label>
+                                    <input type="text" class="form-control" id="regName" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="regEmail" class="form-label">E-mel</label>
+                                    <input type="email" class="form-control" id="regEmail" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="regPassword" class="form-label">Kata Laluan</label>
+                                    <input type="password" class="form-control" id="regPassword" required minlength="6">
+                                    <div class="form-text">Minimum 6 aksara</div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="regConfirmPassword" class="form-label">Sahkan Kata Laluan</label>
+                                    <input type="password" class="form-control" id="regConfirmPassword" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="regDepartment" class="form-label">Jabatan</label>
+                                    <select class="form-select" id="regDepartment" required>
+                                        <option value="Pentadbiran">Pentadbiran</option>
+                                        <option value="Kewangan">Kewangan</option>
+                                        <option value="Sumber Manusia">Sumber Manusia</option>
+                                        <option value="Perancangan">Perancangan</option>
+                                        <option value="ICT">ICT</option>
+                                    </select>
+                                </div>
+                                <button type="submit" class="btn btn-success w-100 mb-3">Daftar Akaun</button>
+                                
+                                <div class="text-center">
+                                    <p class="text-muted">atau</p>
+                                    <button type="button" id="googleRegisterBtn" class="btn btn-outline-danger w-100">
+                                        <i class="fab fa-google me-2"></i>
+                                        Daftar dengan Google
                                     </button>
                                 </div>
                             </form>

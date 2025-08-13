@@ -45,7 +45,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/export/borrowings/excel', [ReportController::class, 'exportBorrowingsExcel'])->name('export.borrowings.excel');
     
     // User Management Routes (Admin only)
-    Route::middleware(['role:admin'])->group(function () {
+    Route::middleware(['permission:manage_users'])->group(function () {
         Route::resource('users', UserController::class);
         Route::post('/users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle-status');
     });
