@@ -36,7 +36,10 @@ class PWAInstaller {
             
             // Show install button if not already installed
             if (!this.isInstalled) {
-                this.showInstallButton();
+                // Delay showing install button to avoid issues
+                setTimeout(() => {
+                    this.showInstallButton();
+                }, 1000);
             }
         });
 

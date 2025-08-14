@@ -1,6 +1,27 @@
 // Firebase configuration
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-import { getFirestore, connectFirestoreEmulator } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+import { 
+    getFirestore, 
+    connectFirestoreEmulator,
+    collection, 
+    doc, 
+    addDoc, 
+    getDoc, 
+    getDocs, 
+    updateDoc, 
+    deleteDoc, 
+    query, 
+    where, 
+    orderBy, 
+    limit, 
+    startAfter,
+    serverTimestamp,
+    increment,
+    writeBatch,
+    onSnapshot,
+    enableNetwork, 
+    disableNetwork
+} from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 import { getAuth, connectAuthEmulator, GoogleAuthProvider } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 import { getStorage, connectStorageEmulator } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
 
@@ -24,8 +45,25 @@ export const auth = getAuth(app);
 export const storage = getStorage(app);
 export const googleProvider = new GoogleAuthProvider();
 
-// Enable offline persistence
-import { enableNetwork, disableNetwork } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+// Export Firestore functions
+export { 
+    collection, 
+    doc, 
+    addDoc, 
+    getDoc, 
+    getDocs, 
+    updateDoc, 
+    deleteDoc, 
+    query, 
+    where, 
+    orderBy, 
+    limit, 
+    startAfter,
+    serverTimestamp,
+    increment,
+    writeBatch,
+    onSnapshot
+};
 
 // Handle online/offline status
 window.addEventListener('online', () => {

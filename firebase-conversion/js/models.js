@@ -170,7 +170,131 @@ class LocationModel extends BaseModel {
     }
 
     getLocationCode(location) {
+        if (location.qrCode) {
+            return location.qrCode;
+        }
         return (location.room.substring(0, 1) + location.rack.substring(0, 1) + location.slot).toUpperCase();
+    }
+
+    // Enhanced methods for new system
+    async create(data) {
+        const locationData = {
+            name: data.name,
+            type: data.type || 'room',
+            parentId: data.parentId || null,
+            description: data.description || '',
+            status: data.status || 'empty',
+            sortOrder: data.sortOrder || 0,
+            isAvailable: data.isAvailable !== false,
+            filesCount: 0,
+            qrCode: data.qrCode || this.generateQrCode(),
+            // Legacy fields for backward compatibility
+            room: data.room || (data.type === 'room' ? data.name : ''),
+            rack: data.rack || (data.type === 'rack' ? data.name : ''),
+            slot: data.slot || (data.type === 'slot' ? data.name : ''),
+            is_available: data.isAvailable !== false,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+            createdBy: authManager.currentUser?.uid
+        };
+
+        const docRef = await addDoc(this.collection, locationData);
+        return { id: docRef.id, ...locationData };
+    }
+
+    async getAll() {
+        const q = query(this.collection, orderBy('sortOrder', 'asc'), orderBy('name', 'asc'));
+        const querySnapshot = await getDocs(q);
+        return querySnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+    }
+
+    async getByType(type) {
+        const q = query(this.collection, 
+            where('type', '==', type),
+            orderBy('sortOrder', 'asc'),
+            orderBy('name', 'asc')
+        );
+        const querySnapshot = await getDocs(q);
+        return querySnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+    }
+
+    async getByParent(parentId) {
+        const q = parentId 
+            ? query(this.collection, 
+                where('parentId', '==', parentId),
+                orderBy('sortOrder', 'asc')
+              )
+            : query(this.collection, 
+                where('parentId', '==', null),
+                orderBy('sortOrder', 'asc')
+              );
+              
+        const querySnapshot = await getDocs(q);
+        return querySnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+    }
+
+    async search(searchTerm) {
+        const allLocations = await this.getAll();
+        const term = searchTerm.toLowerCase();
+        
+        return allLocations.filter(location => 
+            (location.name && location.name.toLowerCase().includes(term)) ||
+            (location.description && location.description.toLowerCase().includes(term)) ||
+            (location.qrCode && location.qrCode.toLowerCase().includes(term)) ||
+            (location.room && location.room.toLowerCase().includes(term)) ||
+            (location.rack && location.rack.toLowerCase().includes(term)) ||
+            (location.slot && location.slot.toLowerCase().includes(term))
+        );
+    }
+
+    generateQrCode() {
+        return 'LOC_' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).substr(2, 5).toUpperCase();
+    }
+
+    // Helper methods for UI
+    getTypeIcon(type) {
+        const icons = {
+            room: 'fas fa-door-open',
+            rack: 'fas fa-layer-group', 
+            slot: 'fas fa-square'
+        };
+        return icons[type] || 'fas fa-map-marker-alt';
+    }
+
+    getStatusClass(status) {
+        const classes = {
+            empty: 'success',
+            occupied: 'danger',
+            maintenance: 'warning'
+        };
+        return classes[status] || 'secondary';
+    }
+
+    getStatusLabel(status) {
+        const labels = {
+            empty: 'Kosong',
+            occupied: 'Ada Fail', 
+            maintenance: 'Penyelenggaraan'
+        };
+        return labels[status] || 'Tidak Diketahui';
+    }
+
+    getTypeLabel(type) {
+        const labels = {
+            room: 'Bilik',
+            rack: 'Rak',
+            slot: 'Slot'
+        };
+        return labels[type] || 'Tidak Diketahui';
     }
 }
 

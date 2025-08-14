@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Setup Sample Locations</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h4>Setup Sample Locations Data</h4>
+                    </div>
+                    <div class="card-body">
+                        <p>Click the button below to create sample location data for testing:</p>
+                        
+                        <div id="status" class="mb-3"></div>
+                        
+                        <button id="createBtn" class="btn btn-primary me-2">Create Sample Locations</button>
+                        <button id="clearBtn" class="btn btn-danger me-2">Clear All Locations</button>
+                        <button id="checkBtn" class="btn btn-info">Check Current Data</button>
+                        
+                        <div id="results" class="mt-4"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { 
+            getFirestore, 
+            collection, 
+            addDoc, 
+            getDocs, 
+            deleteDoc,
+            doc,
+            serverTimestamp
+        } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import { 
+            getAuth, 
+            signInAnonymously 
+        } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBmBaCqU1pv9KXRgKuowAGkR4kAjdFMWXU",
+            authDomain: "sistem-penyimpanan-fail-tongod.firebaseapp.com",
+            projectId: "sistem-penyimpanan-fail-tongod",
+            storageBucket: "sistem-penyimpanan-fail-tongod.firebasestorage.app",
+            messagingSenderId: "590240820717",
+            appId: "1:590240820717:web:4e5e2b8c5cb3df95e49b10"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        // Sign in anonymously for testing
+        await signInAnonymously(auth);
+
+        const statusDiv = document.getElementById('status');
+        const resultsDiv = document.getElementById('results');
+
+        function showStatus(message, type = 'info') {
+            statusDiv.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+        }
+
+        // Sample location data
+        const sampleLocations = [
+            // Rooms
+            {
+                name: "Bilik Pentadbiran A",
+                type: "room",
+                parentId: null,
+                description: "Bilik utama untuk fail pentadbiran",
+                status: "empty",
+                sortOrder: 1,
+                isAvailable: true,
+                filesCount: 0,
+                qrCode: "LOC_ADMIN_A"
+            },
+            {
+                name: "Bilik Kewangan",
+                type: "room", 
+                parentId: null,
+                description: "Bilik penyimpanan dokumen kewangan",
+                status: "empty",
+                sortOrder: 2,
+                isAvailable: true,
+                filesCount: 0,
+                qrCode: "LOC_FINANCE"
+            },
+            {
+                name: "Bilik Arkib",
+                type: "room",
+                parentId: null, 
+                description: "Bilik arkib untuk fail lama",
+                status: "empty",
+                sortOrder: 3,
+                isAvailable: true,
+                filesCount: 0,
+                qrCode: "LOC_ARCHIVE"
+            }
+        ];
+
+        document.getElementById('createBtn').addEventListener('click', async () => {
+            try {
+                showStatus('Creating sample locations...', 'info');
+                
+                const roomIds = {};
+                
+                // Create rooms first
+                for (const location of sampleLocations) {
+                    const docData = {
+                        ...location,
+                        createdAt: serverTimestamp(),
+                        updatedAt: serverTimestamp(),
+                        createdBy: auth.currentUser?.uid || 'system'
+                    };
+                    
+                    const docRef = await addDoc(collection(db, 'locations'), docData);
+                    roomIds[location.qrCode] = docRef.id;
+                    console.log(`Created room: ${location.name} with ID: ${docRef.id}`);
+                }
+                
+                // Create sample racks for Admin room
+                const adminRoomId = roomIds['LOC_ADMIN_A'];
+                const racks = [
+                    {
+                        name: "Rak A1",
+                        type: "rack",
+                        parentId: adminRoomId,
+                        description: "Rak pertama di bilik pentadbiran",
+                        status: "empty",
+                        sortOrder: 1,
+                        isAvailable: true,
+                        filesCount: 0,
+                        qrCode: "LOC_ADMIN_A_R1"
+                    },
+                    {
+                        name: "Rak A2", 
+                        type: "rack",
+                        parentId: adminRoomId,
+                        description: "Rak kedua di bilik pentadbiran",
+                        status: "empty",
+                        sortOrder: 2,
+                        isAvailable: true,
+                        filesCount: 0,
+                        qrCode: "LOC_ADMIN_A_R2"
+                    }
+                ];
+                
+                const rackIds = {};
+                for (const rack of racks) {
+                    const docData = {
+                        ...rack,
+                        createdAt: serverTimestamp(),
+                        updatedAt: serverTimestamp(),
+                        createdBy: auth.currentUser?.uid || 'system'
+                    };
+                    
+                    const docRef = await addDoc(collection(db, 'locations'), docData);
+                    rackIds[rack.qrCode] = docRef.id;
+                    console.log(`Created rack: ${rack.name} with ID: ${docRef.id}`);
+                }
+                
+                // Create sample slots for Rack A1
+                const rackA1Id = rackIds['LOC_ADMIN_A_R1'];
+                const slots = [
+                    {
+                        name: "Slot A1-1",
+                        type: "slot",
+                        parentId: rackA1Id,
+                        description: "Slot pertama di rak A1",
+                        status: "empty",
+                        sortOrder: 1,
+                        isAvailable: true,
+                        filesCount: 0,
+                        qrCode: "LOC_ADMIN_A1_S1"
+                    },
+                    {
+                        name: "Slot A1-2",
+                        type: "slot", 
+                        parentId: rackA1Id,
+                        description: "Slot kedua di rak A1",
+                        status: "empty",
+                        sortOrder: 2,
+                        isAvailable: true,
+                        filesCount: 0,
+                        qrCode: "LOC_ADMIN_A1_S2"
+                    },
+                    {
+                        name: "Slot A1-3",
+                        type: "slot",
+                        parentId: rackA1Id, 
+                        description: "Slot ketiga di rak A1",
+                        status: "empty",
+                        sortOrder: 3,
+                        isAvailable: true,
+                        filesCount: 0,
+                        qrCode: "LOC_ADMIN_A1_S3"
+                    }
+                ];
+                
+                for (const slot of slots) {
+                    const docData = {
+                        ...slot,
+                        createdAt: serverTimestamp(),
+                        updatedAt: serverTimestamp(),
+                        createdBy: auth.currentUser?.uid || 'system'
+                    };
+                    
+                    const docRef = await addDoc(collection(db, 'locations'), docData);
+                    console.log(`Created slot: ${slot.name} with ID: ${docRef.id}`);
+                }
+                
+                showStatus('✅ Sample locations created successfully!', 'success');
+                checkCurrentData();
+                
+            } catch (error) {
+                console.error('Error creating locations:', error);
+                showStatus(`❌ Error: ${error.message}`, 'danger');
+            }
+        });
+
+        document.getElementById('clearBtn').addEventListener('click', async () => {
+            if (!confirm('Are you sure you want to delete ALL locations? This cannot be undone!')) {
+                return;
+            }
+            
+            try {
+                showStatus('Deleting all locations...', 'warning');
+                
+                const snapshot = await getDocs(collection(db, 'locations'));
+                
+                for (const docSnapshot of snapshot.docs) {
+                    await deleteDoc(doc(db, 'locations', docSnapshot.id));
+                }
+                
+                showStatus('✅ All locations deleted successfully!', 'success');
+                resultsDiv.innerHTML = '';
+                
+            } catch (error) {
+                console.error('Error deleting locations:', error);
+                showStatus(`❌ Error: ${error.message}`, 'danger');
+            }
+        });
+
+        document.getElementById('checkBtn').addEventListener('click', checkCurrentData);
+
+        async function checkCurrentData() {
+            try {
+                const snapshot = await getDocs(collection(db, 'locations'));
+                const locations = [];
+                
+                snapshot.forEach(doc => {
+                    locations.push({ id: doc.id, ...doc.data() });
+                });
+                
+                if (locations.length === 0) {
+                    resultsDiv.innerHTML = '<div class="alert alert-info">No locations found in database.</div>';
+                    return;
+                }
+                
+                // Group by type
+                const rooms = locations.filter(loc => loc.type === 'room');
+                const racks = locations.filter(loc => loc.type === 'rack');
+                const slots = locations.filter(loc => loc.type === 'slot');
+                
+                resultsDiv.innerHTML = `
+                    <div class="alert alert-info">
+                        <strong>Current Locations:</strong><br>
+                        📁 Rooms: ${rooms.length}<br>
+                        📚 Racks: ${racks.length}<br>
+                        📦 Slots: ${slots.length}<br>
+                        <strong>Total: ${locations.length}</strong>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4">
+                            <h6>Rooms:</h6>
+                            <ul class="list-group list-group-flush">
+                                ${rooms.map(room => `<li class="list-group-item">${room.name}</li>`).join('')}
+                            </ul>
+                        </div>
+                        <div class="col-md-4">
+                            <h6>Racks:</h6>
+                            <ul class="list-group list-group-flush">
+                                ${racks.map(rack => `<li class="list-group-item">${rack.name}</li>`).join('')}
+                            </ul>
+                        </div>
+                        <div class="col-md-4">
+                            <h6>Slots:</h6>
+                            <ul class="list-group list-group-flush">
+                                ${slots.map(slot => `<li class="list-group-item">${slot.name}</li>`).join('')}
+                            </ul>
+                        </div>
+                    </div>
+                `;
+                
+            } catch (error) {
+                console.error('Error checking data:', error);
+                resultsDiv.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+            }
+        }
+
+        // Check data on load
+        checkCurrentData();
+    </script>
+</body>
+</html>

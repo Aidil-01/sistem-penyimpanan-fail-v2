@@ -11,7 +11,11 @@
       "Bash(powershell:*)",
       "Bash(cp:*)",
       "Bash(php:*)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(firebase auth:export:*)",
+      "Bash(firebase projects:list:*)",
+      "Bash(firebase deploy:*)",
+      "Bash(rm:*)"
     ],
     "deny": []
   }

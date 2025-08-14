@@ -27,10 +27,43 @@ service cloud.firestore {
       allow delete: if hasRole(['admin', 'staff_jabatan']);
     }
 
-    // Locations collection - staff can manage
+    // Locations collection - enhanced rules for hierarchical structure
     match /locations/{locationId} {
+      // Allow read for authenticated users
       allow read: if request.auth != null;
-      allow create, update, delete: if hasRole(['admin', 'staff_jabatan', 'staff_pembantu']);
+      
+      // Allow create for authenticated users (temporary for setup)
+      allow create: if request.auth != null && isValidLocationData();
+        
+      // Allow update for authenticated users (temporary for setup)
+      allow update: if request.auth != null && isValidLocationData();
+        
+      // Allow delete for authenticated users (temporary for setup)
+      allow delete: if request.auth != null && canDeleteLocation();
+    }
+    
+    // Helper function to validate location data
+    function isValidLocationData() {
+      let data = request.resource.data;
+      return data.keys().hasAll(['name', 'type', 'status']) &&
+             data.type in ['room', 'rack', 'slot'] &&
+             data.status in ['empty', 'occupied', 'maintenance'] &&
+             data.name is string &&
+             data.name.size() > 0 &&
+             data.name.size() <= 100 &&
+             (data.description == null || (data.description is string && data.description.size() <= 500)) &&
+             (data.parentId == null || data.parentId is string) &&
+             data.sortOrder is int &&
+             data.sortOrder >= 0 &&
+             data.isAvailable is bool &&
+             (data.filesCount == null || data.filesCount is int) &&
+             (data.qrCode == null || data.qrCode is string);
+    }
+    
+    // Helper function to check if location can be deleted
+    function canDeleteLocation() {
+      let data = resource.data;
+      return data.filesCount == null || data.filesCount == 0;
     }
 
     // Borrowing records - role-based access

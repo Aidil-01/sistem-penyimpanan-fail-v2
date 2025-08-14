@@ -791,15 +791,76 @@ class App {
 
     // Placeholder methods for other pages
     async loadLocationsPage() {
-        document.getElementById('pageContent').innerHTML = `
-            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                <h1 class="h2"><i class="fas fa-map-marker-alt me-2"></i>Pengurusan Lokasi</h1>
-            </div>
-            <div class="alert alert-info">
-                <i class="fas fa-info-circle me-2"></i>
-                Halaman lokasi akan dilaksanakan kemudian.
-            </div>
-        `;
+        const contentContainer = document.getElementById('pageContent');
+        
+        try {
+            // Show loading state
+            contentContainer.innerHTML = `
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-3">Memuatkan halaman lokasi...</p>
+                </div>
+            `;
+            
+            // Load the locations page HTML
+            const response = await fetch('/locations.html');
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            
+            const html = await response.text();
+            contentContainer.innerHTML = html;
+            
+            // Wait a bit for DOM to settle
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            // Load the locations JavaScript module
+            try {
+                const locationModule = await import('./locations.js');
+                
+                // Initialize location manager
+                if (window.locationManager) {
+                    // Clean up existing instance
+                    window.locationManager = null;
+                }
+                
+                // Create new instance
+                window.locationManager = new locationModule.default();
+                console.log('Location Manager initialized successfully');
+                
+            } catch (moduleError) {
+                console.error('Error loading locations module:', moduleError);
+                throw new Error(`Module loading failed: ${moduleError.message}`);
+            }
+            
+        } catch (error) {
+            console.error('Error loading locations page:', error);
+            contentContainer.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    <strong>Ralat memuatkan halaman lokasi:</strong> ${error.message}
+                    <hr>
+                    <small class="text-muted">
+                        Sila pastikan:
+                        <ul class="mt-2 mb-0">
+                            <li>Sambungan internet stabil</li>
+                            <li>Firestore indexes telah dibuat</li>
+                            <li>Anda telah login dengan akaun yang sah</li>
+                        </ul>
+                    </small>
+                    <div class="mt-3">
+                        <button class="btn btn-primary btn-sm" onclick="app.loadLocationsPage()">
+                            <i class="fas fa-redo me-1"></i>Cuba Lagi
+                        </button>
+                        <a href="/create-indexes.html" class="btn btn-warning btn-sm">
+                            <i class="fas fa-tools me-1"></i>Setup Indexes
+                        </a>
+                    </div>
+                </div>
+            `;
+        }
     }
 
     async loadBorrowingsPage() {
