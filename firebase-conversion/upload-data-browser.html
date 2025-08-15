@@ -270,9 +270,11 @@
                     file_id: 'ADM001',
                     title: 'Surat Arahan Baharu 2024',
                     department: 'Pentadbiran',
-                    category: 'Surat Arahan',
+                    document_type: 'surat',
+                    document_year: 2024,
                     description: 'Surat arahan mengenai prosedur baharu',
                     status: 'tersedia',
+                    location_id: 'slot_a1_1', // Will be replaced with actual ID
                     created_by: 'admin',
                     tags: ['surat', 'arahan', '2024'],
                     createdAt: serverTimestamp(),
@@ -282,9 +284,11 @@
                     file_id: 'KEW001',
                     title: 'Laporan Kewangan Q1 2024',
                     department: 'Kewangan',
-                    category: 'Laporan',
+                    document_type: 'laporan',
+                    document_year: 2024,
                     description: 'Laporan kewangan suku tahun pertama',
                     status: 'tersedia',
+                    location_id: 'slot_a1_2', // Will be replaced with actual ID
                     created_by: 'admin',
                     tags: ['laporan', 'kewangan', 'Q1'],
                     createdAt: serverTimestamp(),
@@ -294,9 +298,11 @@
                     file_id: 'KEW002',
                     title: 'Baucer Perbelanjaan Januari',
                     department: 'Kewangan',
-                    category: 'Baucer',
+                    document_type: 'baucer',
+                    document_year: 2024,
                     description: 'Baucer perbelanjaan untuk bulan Januari',
                     status: 'dipinjam',
+                    location_id: 'slot_a1_3', // Will be replaced with actual ID
                     created_by: 'admin',
                     tags: ['baucer', 'januari', 'perbelanjaan'],
                     createdAt: serverTimestamp(),
@@ -306,9 +312,11 @@
                     file_id: 'ADM002',
                     title: 'Minit Mesyuarat Bulanan',
                     department: 'Pentadbiran',
-                    category: 'Minit Mesyuarat',
+                    document_type: 'minit_mesyuarat',
+                    document_year: 2024,
                     description: 'Minit mesyuarat bulanan Februari 2024',
                     status: 'tersedia',
+                    location_id: 'slot_a2_1', // Will be replaced with actual ID
                     created_by: 'staff',
                     tags: ['minit', 'mesyuarat', 'februari'],
                     createdAt: serverTimestamp(),
@@ -318,9 +326,11 @@
                     file_id: 'ARK001',
                     title: 'Dokumen Arkib Lama 2020',
                     department: 'Pentadbiran',
-                    category: 'Arkiv',
+                    document_type: 'lain',
+                    document_year: 2020,
                     description: 'Dokumen arkib dari tahun 2020',
                     status: 'arkib',
+                    location_id: 'slot_a2_2', // Will be replaced with actual ID
                     created_by: 'admin',
                     tags: ['arkib', '2020', 'lama'],
                     createdAt: serverTimestamp(),
@@ -405,32 +415,91 @@
                 document.getElementById('progressCard').style.display = 'block';
                 document.getElementById('progressList').innerHTML = '';
                 
-                const collections = Object.keys(dummyData);
                 let currentStep = 0;
-                const totalSteps = collections.length;
+                const totalSteps = 4; // locations, files, users, borrowings
                 
                 updateProgress(0, totalSteps, 'Starting upload...');
                 
-                for (const collectionName of collections) {
-                    const data = dummyData[collectionName];
-                    updateProgress(currentStep, totalSteps, `Uploading ${collectionName}...`);
-                    
-                    try {
-                        for (const item of data) {
-                            await addDoc(collection(db, collectionName), item);
-                        }
-                        
-                        addProgressItem(`✅ Uploaded ${data.length} ${collectionName}`, true);
-                        currentStep++;
-                        
-                    } catch (error) {
-                        addProgressItem(`❌ Failed to upload ${collectionName}: ${error.message}`, false);
-                        throw error;
+                // Step 1: Upload locations first
+                updateProgress(currentStep, totalSteps, 'Uploading locations...');
+                const locationIds = {};
+                
+                try {
+                    for (const location of dummyData.locations) {
+                        const docRef = await addDoc(collection(db, 'locations'), location);
+                        // Map by QR code for easy reference
+                        locationIds[location.qrCode] = docRef.id;
                     }
+                    addProgressItem(`✅ Uploaded ${dummyData.locations.length} locations`, true);
+                    currentStep++;
+                } catch (error) {
+                    addProgressItem(`❌ Failed to upload locations: ${error.message}`, false);
+                    throw error;
+                }
+                
+                // Step 2: Upload files with correct location IDs
+                updateProgress(currentStep, totalSteps, 'Uploading files...');
+                
+                try {
+                    const filesWithLocation = dummyData.files.map(file => {
+                        // Map placeholder location_ids to actual IDs
+                        const locationMapping = {
+                            'slot_a1_1': locationIds['LOC_ADMIN_A1_S1'],
+                            'slot_a1_2': locationIds['LOC_ADMIN_A1_S2'], 
+                            'slot_a1_3': locationIds['LOC_ADMIN_A1_S3'],
+                            'slot_a2_1': locationIds['LOC_ADMIN_A2_S1'],
+                            'slot_a2_2': locationIds['LOC_ADMIN_A2_S2']
+                        };
+                        
+                        return {
+                            ...file,
+                            location_id: locationMapping[file.location_id] || null
+                        };
+                    });
+                    
+                    for (const file of filesWithLocation) {
+                        await addDoc(collection(db, 'files'), file);
+                    }
+                    
+                    addProgressItem(`✅ Uploaded ${filesWithLocation.length} files`, true);
+                    currentStep++;
+                } catch (error) {
+                    addProgressItem(`❌ Failed to upload files: ${error.message}`, false);
+                    throw error;
+                }
+                
+                // Step 3: Upload users
+                updateProgress(currentStep, totalSteps, 'Uploading users...');
+                
+                try {
+                    for (const user of dummyData.users) {
+                        await addDoc(collection(db, 'users'), user);
+                    }
+                    
+                    addProgressItem(`✅ Uploaded ${dummyData.users.length} users`, true);
+                    currentStep++;
+                } catch (error) {
+                    addProgressItem(`❌ Failed to upload users: ${error.message}`, false);
+                    throw error;
+                }
+                
+                // Step 4: Upload borrowing records
+                updateProgress(currentStep, totalSteps, 'Uploading borrowing records...');
+                
+                try {
+                    for (const borrowing of dummyData.borrowings) {
+                        await addDoc(collection(db, 'borrowing_records'), borrowing);
+                    }
+                    
+                    addProgressItem(`✅ Uploaded ${dummyData.borrowings.length} borrowing records`, true);
+                    currentStep++;
+                } catch (error) {
+                    addProgressItem(`❌ Failed to upload borrowing records: ${error.message}`, false);
+                    throw error;
                 }
                 
                 updateProgress(totalSteps, totalSteps, 'Upload completed!');
-                showAlert(`🎉 Successfully uploaded all dummy data!`, 'success');
+                showAlert(`🎉 Successfully uploaded all dummy data with proper location sync!`, 'success');
                 
             } catch (error) {
                 showAlert(`❌ Upload failed: ${error.message}`, 'danger');

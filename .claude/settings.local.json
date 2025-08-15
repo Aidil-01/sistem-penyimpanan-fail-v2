@@ -15,7 +15,10 @@
       "Bash(firebase auth:export:*)",
       "Bash(firebase projects:list:*)",
       "Bash(firebase deploy:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
     ],
     "deny": []
   }

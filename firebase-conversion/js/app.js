@@ -700,6 +700,9 @@ class App {
             `).join('');
 
             tbody.innerHTML = filesHtml;
+            
+            // Load location information for each file
+            await this.loadFileLocations(files);
 
         } catch (error) {
             console.error('Error loading files:', error);
@@ -711,6 +714,61 @@ class App {
                     </td>
                 </tr>
             `;
+        }
+    }
+
+    async loadFileLocations(files) {
+        try {
+            // Get all locations
+            const locations = await models.location.getAll();
+            const locationMap = new Map();
+            locations.forEach(loc => locationMap.set(loc.id, loc));
+            
+            // Update location columns for each file
+            files.forEach((file, index) => {
+                const row = document.querySelectorAll('#filesTableBody tr')[index];
+                if (row && file.location_id) {
+                    const locationCell = row.cells[5]; // Location column (index 5)
+                    const location = locationMap.get(file.location_id);
+                    
+                    if (location) {
+                        const locationInfo = this.getLocationDisplay(location);
+                        locationCell.innerHTML = `
+                            <div>
+                                <strong>${locationInfo.name}</strong>
+                                <br>
+                                <small class="text-muted">${locationInfo.path}</small>
+                            </div>
+                        `;
+                    } else {
+                        locationCell.innerHTML = '<small class="text-danger">Lokasi tidak dijumpai</small>';
+                    }
+                } else if (row) {
+                    const locationCell = row.cells[5];
+                    locationCell.innerHTML = '<small class="text-muted">Tiada lokasi ditetapkan</small>';
+                }
+            });
+        } catch (error) {
+            console.error('Error loading file locations:', error);
+        }
+    }
+
+    getLocationDisplay(location) {
+        // Handle both old and new location structure
+        if (location.type) {
+            // New structure
+            return {
+                name: location.name,
+                path: location.type === 'slot' ? 'Slot' : location.type === 'rack' ? 'Rak' : 'Bilik',
+                code: location.qrCode || location.name
+            };
+        } else {
+            // Old structure
+            return {
+                name: `${location.room}-${location.rack}-${location.slot}`,
+                path: `${location.room} > ${location.rack} > ${location.slot}`,
+                code: location.qrCode || `${location.room}${location.rack}${location.slot}`
+            };
         }
     }
 
@@ -907,6 +965,393 @@ class App {
                 Halaman pengguna akan dilaksanakan kemudian.
             </div>
         `;
+    }
+
+    // File Management Functions
+    showCreateFileModal() {
+        this.showFileModal();
+    }
+
+    editFile(fileId) {
+        this.showFileModal(fileId);
+    }
+
+    viewFile(fileId) {
+        this.showFileDetailsModal(fileId);
+    }
+
+    async showFileModal(fileId = null) {
+        const isEdit = fileId !== null;
+        let fileData = null;
+        
+        if (isEdit) {
+            try {
+                fileData = await models.file.getById(fileId);
+                if (!fileData) {
+                    this.showAlert('Fail tidak dijumpai', 'danger');
+                    return;
+                }
+            } catch (error) {
+                console.error('Error loading file data:', error);
+                this.showAlert('Ralat memuatkan data fail', 'danger');
+                return;
+            }
+        }
+
+        // Get available locations for dropdown
+        let locations = [];
+        try {
+            locations = await models.location.getAll();
+        } catch (error) {
+            console.error('Error loading locations:', error);
+            // Use dummy data if Firebase fails
+            locations = [
+                {id: 'slot_a1_1', name: 'Slot A1-1', type: 'slot'},
+                {id: 'slot_a1_2', name: 'Slot A1-2', type: 'slot'},
+                {id: 'slot_a1_3', name: 'Slot A1-3', type: 'slot'}
+            ];
+        }
+
+        const availableLocations = locations.filter(loc => 
+            loc.type === 'slot' || (!loc.type && loc.slot) // Either new slot type or old structure
+        );
+
+        const modalHtml = `
+            <div class="modal fade" id="fileModal" tabindex="-1">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">${isEdit ? 'Edit Fail' : 'Tambah Fail Baharu'}</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <form id="fileForm">
+                            <div class="modal-body">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Tajuk Fail <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" name="title" 
+                                               value="${fileData?.title || ''}" required>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Nombor Rujukan</label>
+                                        <input type="text" class="form-control" name="reference_number" 
+                                               value="${fileData?.reference_number || ''}">
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label">Jabatan <span class="text-danger">*</span></label>
+                                        <select class="form-select" name="department" required>
+                                            <option value="">Pilih Jabatan</option>
+                                            <option value="Pentadbiran" ${fileData?.department === 'Pentadbiran' ? 'selected' : ''}>Pentadbiran</option>
+                                            <option value="Kewangan" ${fileData?.department === 'Kewangan' ? 'selected' : ''}>Kewangan</option>
+                                            <option value="Sumber Manusia" ${fileData?.department === 'Sumber Manusia' ? 'selected' : ''}>Sumber Manusia</option>
+                                            <option value="Perancangan" ${fileData?.department === 'Perancangan' ? 'selected' : ''}>Perancangan</option>
+                                            <option value="ICT" ${fileData?.department === 'ICT' ? 'selected' : ''}>ICT</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label">Jenis Dokumen</label>
+                                        <select class="form-select" name="document_type">
+                                            <option value="">Pilih Jenis</option>
+                                            <option value="surat" ${fileData?.document_type === 'surat' ? 'selected' : ''}>Surat</option>
+                                            <option value="laporan" ${fileData?.document_type === 'laporan' ? 'selected' : ''}>Laporan</option>
+                                            <option value="minit_mesyuarat" ${fileData?.document_type === 'minit_mesyuarat' ? 'selected' : ''}>Minit Mesyuarat</option>
+                                            <option value="memo" ${fileData?.document_type === 'memo' ? 'selected' : ''}>Memo</option>
+                                            <option value="baucer" ${fileData?.document_type === 'baucer' ? 'selected' : ''}>Baucer</option>
+                                            <option value="lain" ${fileData?.document_type === 'lain' ? 'selected' : ''}>Lain-lain</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label">Tahun Dokumen</label>
+                                        <input type="number" class="form-control" name="document_year" 
+                                               value="${fileData?.document_year || new Date().getFullYear()}" 
+                                               min="2000" max="${new Date().getFullYear()}">
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Lokasi Penyimpanan <span class="text-danger">*</span></label>
+                                    <select class="form-select" name="location_id" required>
+                                        <option value="">Pilih Lokasi</option>
+                                        ${availableLocations.map(location => {
+                                            const locationName = this.getLocationDisplay(location).name;
+                                            const locationPath = this.getLocationDisplay(location).path;
+                                            const selected = fileData?.location_id === location.id ? 'selected' : '';
+                                            return `<option value="${location.id}" ${selected}>${locationName} (${locationPath})</option>`;
+                                        }).join('')}
+                                    </select>
+                                    <div class="form-text">Pilih slot yang tersedia untuk menyimpan fail ini</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Keterangan</label>
+                                    <textarea class="form-control" name="description" rows="3">${fileData?.description || ''}</textarea>
+                                </div>
+
+                                ${isEdit ? `
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Status</label>
+                                        <select class="form-select" name="status">
+                                            <option value="tersedia" ${fileData?.status === 'tersedia' ? 'selected' : ''}>Tersedia</option>
+                                            <option value="dipinjam" ${fileData?.status === 'dipinjam' ? 'selected' : ''}>Dipinjam</option>
+                                            <option value="arkib" ${fileData?.status === 'arkib' ? 'selected' : ''}>Arkib</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                ` : ''}
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-1"></i>${isEdit ? 'Kemaskini' : 'Simpan'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Remove existing modal
+        document.querySelector('#fileModal')?.remove();
+        
+        // Add new modal to body
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        
+        // Initialize and show modal
+        const modal = new bootstrap.Modal(document.getElementById('fileModal'));
+        modal.show();
+
+        // Handle form submission
+        document.getElementById('fileForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await this.handleFileFormSubmit(e.target, isEdit, fileId);
+            modal.hide();
+        });
+    }
+
+    async handleFileFormSubmit(form, isEdit, fileId) {
+        try {
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+            
+            if (isEdit) {
+                await models.file.update(fileId, data);
+                this.showAlert('Fail berjaya dikemaskini', 'success');
+            } else {
+                await models.file.createFile(data);
+                this.showAlert('Fail berjaya ditambah', 'success');
+            }
+            
+            // Reload files list
+            await this.loadFilesList();
+            
+        } catch (error) {
+            console.error('Error saving file:', error);
+            this.showAlert('Ralat menyimpan fail: ' + error.message, 'danger');
+        }
+    }
+
+    async showFileDetailsModal(fileId) {
+        try {
+            const fileData = await models.file.getById(fileId);
+            if (!fileData) {
+                this.showAlert('Fail tidak dijumpai', 'danger');
+                return;
+            }
+
+            // Get location information
+            let locationInfo = 'Tiada lokasi ditetapkan';
+            if (fileData.location_id) {
+                try {
+                    const location = await models.location.getById(fileData.location_id);
+                    if (location) {
+                        const locationDisplay = this.getLocationDisplay(location);
+                        locationInfo = `${locationDisplay.name} (${locationDisplay.path})`;
+                    }
+                } catch (error) {
+                    console.error('Error loading location:', error);
+                    locationInfo = 'Ralat memuatkan lokasi';
+                }
+            }
+
+            const modalHtml = `
+                <div class="modal fade" id="fileDetailsModal" tabindex="-1">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">
+                                    <i class="fas fa-file-alt me-2"></i>Butiran Fail
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h6>Maklumat Asas</h6>
+                                        <table class="table table-borderless table-sm">
+                                            <tr>
+                                                <td><strong>ID Fail:</strong></td>
+                                                <td>${fileData.file_id}</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Tajuk:</strong></td>
+                                                <td>${fileData.title}</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Rujukan:</strong></td>
+                                                <td>${fileData.reference_number || '-'}</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Jabatan:</strong></td>
+                                                <td>${fileData.department}</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Jenis:</strong></td>
+                                                <td>${fileData.document_type || '-'}</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Tahun:</strong></td>
+                                                <td>${fileData.document_year || '-'}</td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h6>Status dan Lokasi</h6>
+                                        <table class="table table-borderless table-sm">
+                                            <tr>
+                                                <td><strong>Status:</strong></td>
+                                                <td>
+                                                    <span class="badge ${this.getStatusBadgeClass(fileData.status)}">
+                                                        ${this.getStatusDisplay(fileData.status)}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Lokasi:</strong></td>
+                                                <td>${locationInfo}</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Dicipta:</strong></td>
+                                                <td>${this.formatDate(fileData.created_at)}</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Dikemaskini:</strong></td>
+                                                <td>${this.formatDate(fileData.updated_at)}</td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </div>
+                                
+                                ${fileData.description ? `
+                                <div class="mt-3">
+                                    <h6>Keterangan</h6>
+                                    <p class="text-muted">${fileData.description}</p>
+                                </div>
+                                ` : ''}
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                                <button type="button" class="btn btn-warning" onclick="app.editFile('${fileData.id}'); bootstrap.Modal.getInstance(document.getElementById('fileDetailsModal')).hide();">
+                                    <i class="fas fa-edit me-1"></i>Edit
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Remove existing modal
+            document.querySelector('#fileDetailsModal')?.remove();
+            
+            // Add new modal to body
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            
+            // Initialize and show modal
+            const modal = new bootstrap.Modal(document.getElementById('fileDetailsModal'));
+            modal.show();
+
+        } catch (error) {
+            console.error('Error loading file details:', error);
+            this.showAlert('Ralat memuatkan butiran fail', 'danger');
+        }
+    }
+
+    getStatusDisplay(status) {
+        const statusMap = {
+            'tersedia': 'Tersedia',
+            'dipinjam': 'Dipinjam', 
+            'arkib': 'Arkib'
+        };
+        return statusMap[status] || status;
+    }
+
+    getStatusBadgeClass(status) {
+        const classMap = {
+            'tersedia': 'bg-success',
+            'dipinjam': 'bg-warning',
+            'arkib': 'bg-secondary'
+        };
+        return classMap[status] || 'bg-primary';
+    }
+
+    formatDate(timestamp) {
+        if (!timestamp) return '-';
+        
+        let date;
+        if (timestamp.toDate) {
+            date = timestamp.toDate();
+        } else if (timestamp instanceof Date) {
+            date = timestamp;
+        } else {
+            date = new Date(timestamp);
+        }
+        
+        return date.toLocaleDateString('ms-MY', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    }
+
+    showAlert(message, type = 'info') {
+        const alertContainer = document.getElementById('alertContainer');
+        if (!alertContainer) return;
+
+        const alertId = 'alert_' + Date.now();
+        const alertHtml = `
+            <div id="${alertId}" class="alert alert-${type} alert-dismissible fade show" role="alert">
+                <i class="fas fa-${this.getAlertIcon(type)} me-2"></i>
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `;
+
+        alertContainer.insertAdjacentHTML('beforeend', alertHtml);
+
+        // Auto dismiss after 5 seconds
+        setTimeout(() => {
+            const alert = document.getElementById(alertId);
+            if (alert) {
+                const bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            }
+        }, 5000);
+    }
+
+    getAlertIcon(type) {
+        const icons = {
+            success: 'check-circle',
+            danger: 'exclamation-circle',
+            warning: 'exclamation-triangle',
+            info: 'info-circle'
+        };
+        return icons[type] || 'info-circle';
     }
 }
 

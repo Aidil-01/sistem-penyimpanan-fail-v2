@@ -296,7 +296,7 @@ class LocationManager {
                 name: 'Slot A1-1',
                 type: 'slot',
                 parentId: 'rack_a1',
-                description: 'Slot pertama di rak A1',
+                description: 'Slot pertama di rak A1 - ADM001',
                 status: 'occupied',
                 sortOrder: 1,
                 isAvailable: true,
@@ -310,7 +310,7 @@ class LocationManager {
                 name: 'Slot A1-2',
                 type: 'slot',
                 parentId: 'rack_a1',
-                description: 'Slot kedua di rak A1',
+                description: 'Slot kedua di rak A1 - KEW001',
                 status: 'occupied',
                 sortOrder: 2,
                 isAvailable: true,
@@ -324,7 +324,7 @@ class LocationManager {
                 name: 'Slot A1-3',
                 type: 'slot',
                 parentId: 'rack_a1',
-                description: 'Slot ketiga di rak A1',
+                description: 'Slot ketiga di rak A1 - KEW002',
                 status: 'occupied',
                 sortOrder: 3,
                 isAvailable: true,
@@ -340,7 +340,7 @@ class LocationManager {
                 name: 'Slot A2-1',
                 type: 'slot',
                 parentId: 'rack_a2',
-                description: 'Slot pertama di rak A2',
+                description: 'Slot pertama di rak A2 - ADM002',
                 status: 'occupied',
                 sortOrder: 1,
                 isAvailable: true,
@@ -354,7 +354,7 @@ class LocationManager {
                 name: 'Slot A2-2',
                 type: 'slot',
                 parentId: 'rack_a2',
-                description: 'Slot kedua di rak A2',
+                description: 'Slot kedua di rak A2 - ARK001',
                 status: 'occupied',
                 sortOrder: 2,
                 isAvailable: true,
@@ -372,6 +372,99 @@ class LocationManager {
         hideLoading();
         
         showAlert('Data dummy lokasi telah dimuatkan', 'info');
+        
+        // Also load dummy files to sync with locations
+        this.loadDummyFiles();
+    }
+
+    loadDummyFiles() {
+        if (typeof models !== 'undefined' && models.file) {
+            console.log('Loading dummy files...');
+            
+            // Dummy files data that matches with location slots
+            const dummyFiles = [
+                {
+                    id: 'file_adm001',
+                    file_id: 'ADM001',
+                    title: 'Surat Arahan Baharu 2024',
+                    department: 'Pentadbiran',
+                    document_type: 'surat',
+                    document_year: 2024,
+                    description: 'Surat arahan mengenai prosedur baharu',
+                    status: 'tersedia',
+                    location_id: 'slot_a1_1',
+                    created_by: 'admin',
+                    tags: ['surat', 'arahan', '2024'],
+                    createdAt: new Date('2024-01-15'),
+                    updatedAt: new Date('2024-01-15')
+                },
+                {
+                    id: 'file_kew001',
+                    file_id: 'KEW001',
+                    title: 'Laporan Kewangan Q1 2024',
+                    department: 'Kewangan',
+                    document_type: 'laporan',
+                    document_year: 2024,
+                    description: 'Laporan kewangan suku tahun pertama',
+                    status: 'tersedia',
+                    location_id: 'slot_a1_2',
+                    created_by: 'admin',
+                    tags: ['laporan', 'kewangan', 'Q1'],
+                    createdAt: new Date('2024-01-15'),
+                    updatedAt: new Date('2024-01-15')
+                },
+                {
+                    id: 'file_kew002',
+                    file_id: 'KEW002',
+                    title: 'Baucer Perbelanjaan Januari',
+                    department: 'Kewangan',
+                    document_type: 'baucer',
+                    document_year: 2024,
+                    description: 'Baucer perbelanjaan untuk bulan Januari',
+                    status: 'dipinjam',
+                    location_id: 'slot_a1_3',
+                    created_by: 'admin',
+                    tags: ['baucer', 'januari', 'perbelanjaan'],
+                    createdAt: new Date('2024-01-15'),
+                    updatedAt: new Date('2024-01-15')
+                },
+                {
+                    id: 'file_adm002',
+                    file_id: 'ADM002',
+                    title: 'Minit Mesyuarat Bulanan',
+                    department: 'Pentadbiran',
+                    document_type: 'minit_mesyuarat',
+                    document_year: 2024,
+                    description: 'Minit mesyuarat bulanan Februari 2024',
+                    status: 'tersedia',
+                    location_id: 'slot_a2_1',
+                    created_by: 'staff',
+                    tags: ['minit', 'mesyuarat', 'februari'],
+                    createdAt: new Date('2024-01-15'),
+                    updatedAt: new Date('2024-01-15')
+                },
+                {
+                    id: 'file_ark001',
+                    file_id: 'ARK001',
+                    title: 'Dokumen Arkib Lama 2020',
+                    department: 'Pentadbiran',
+                    document_type: 'lain',
+                    document_year: 2020,
+                    description: 'Dokumen arkib dari tahun 2020',
+                    status: 'arkib',
+                    location_id: 'slot_a2_2',
+                    created_by: 'admin',
+                    tags: ['arkib', '2020', 'lama'],
+                    createdAt: new Date('2024-01-15'),
+                    updatedAt: new Date('2024-01-15')
+                }
+            ];
+            
+            // Store files data globally for file management page
+            window.dummyFiles = dummyFiles;
+            
+            console.log('Dummy files loaded and synced with locations');
+        }
     }
 
     showEmptyState() {

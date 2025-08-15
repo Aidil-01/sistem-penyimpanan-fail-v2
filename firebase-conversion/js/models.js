@@ -68,13 +68,38 @@ class BaseModel {
     }
 
     async getAll(constraints = []) {
-        let q = query(this.collection, ...constraints);
-        const querySnapshot = await getDocs(q);
-        
-        return querySnapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-        }));
+        try {
+            if (!db) {
+                throw new Error('Database not available');
+            }
+            
+            let q = query(this.collection, ...constraints);
+            const querySnapshot = await getDocs(q);
+            
+            const results = querySnapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+            
+            // Return dummy data if Firebase is empty and it's files collection
+            if (results.length === 0 && this.collectionName === 'files' && window.dummyFiles) {
+                console.log('Using dummy files data as fallback');
+                return window.dummyFiles;
+            }
+            
+            return results;
+            
+        } catch (error) {
+            console.error(`Error loading ${this.collectionName}:`, error);
+            
+            // Return dummy data for files if available
+            if (this.collectionName === 'files' && window.dummyFiles) {
+                console.log('Firebase error, using dummy files data');
+                return window.dummyFiles;
+            }
+            
+            throw error;
+        }
     }
 
     // Real-time listener
