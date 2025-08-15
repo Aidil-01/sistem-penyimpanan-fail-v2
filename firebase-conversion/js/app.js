@@ -805,7 +805,7 @@ class App {
             `;
             
             // Load the locations page HTML
-            const response = await fetch('/locations.html');
+            const response = await fetch('./locations.html');
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }

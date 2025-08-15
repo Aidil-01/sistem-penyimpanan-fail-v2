@@ -87,7 +87,9 @@ class LocationManager {
             
             // Check if db is available
             if (!db) {
-                throw new Error('Database connection not available');
+                console.warn('Database connection not available, using dummy data');
+                this.loadDummyData();
+                return;
             }
             
             // Set up real-time listener for locations
@@ -95,36 +97,41 @@ class LocationManager {
             
             // First try to get locations without complex query
             try {
-                const q = query(locationsRef, orderBy('sortOrder', 'asc'), orderBy('name', 'asc'));
+                const snapshot = await getDocs(locationsRef);
+                console.log(`Received ${snapshot.size} locations from Firestore`);
                 
-                const unsubscribe = onSnapshot(q, (snapshot) => {
-                    console.log(`Received ${snapshot.size} locations from Firestore`);
-                    
-                    this.locations = [];
-                    snapshot.forEach((doc) => {
-                        const data = doc.data();
-                        this.locations.push({ id: doc.id, ...data });
-                    });
-                    
-                    this.filteredLocations = [...this.locations];
-                    this.updateStatistics();
-                    this.renderCurrentView();
-                    this.populateFilters();
-                    hideLoading();
-                    
-                }, (error) => {
-                    console.error('Firestore listener error:', error);
-                    
-                    // If complex query fails, try simpler query
-                    this.loadLocationsSimple();
+                this.locations = [];
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    this.locations.push({ id: doc.id, ...data });
                 });
                 
-                // Store unsubscribe function
-                this.unsubscribeLocations = unsubscribe;
+                // If no locations found, load dummy data
+                if (this.locations.length === 0) {
+                    console.log('No locations found, loading dummy data...');
+                    this.loadDummyData();
+                    return;
+                }
+                
+                // Sort locations
+                this.locations.sort((a, b) => {
+                    const sortOrderA = a.sortOrder || 0;
+                    const sortOrderB = b.sortOrder || 0;
+                    if (sortOrderA !== sortOrderB) {
+                        return sortOrderA - sortOrderB;
+                    }
+                    return (a.name || '').localeCompare(b.name || '');
+                });
+                
+                this.filteredLocations = [...this.locations];
+                this.updateStatistics();
+                this.renderCurrentView();
+                this.populateFilters();
+                hideLoading();
                 
             } catch (queryError) {
-                console.warn('Complex query failed, trying simple query:', queryError);
-                await this.loadLocationsSimple();
+                console.warn('Firestore query failed, using dummy data:', queryError);
+                this.loadDummyData();
             }
             
         } catch (error) {
@@ -132,8 +139,8 @@ class LocationManager {
             showAlert(`Ralat memuatkan data lokasi: ${error.message}`, 'danger');
             hideLoading();
             
-            // Show empty state
-            this.showEmptyState();
+            // Load dummy data as fallback
+            this.loadDummyData();
         }
     }
 
@@ -174,6 +181,199 @@ class LocationManager {
         }
     }
 
+    loadDummyData() {
+        console.log('Loading dummy data...');
+        
+        // Dummy locations data
+        this.locations = [
+            // Bilik-bilik (Rooms)
+            {
+                id: 'room_admin_a',
+                name: 'Bilik Pentadbiran A',
+                type: 'room',
+                parentId: null,
+                description: 'Bilik utama untuk fail pentadbiran',
+                status: 'empty',
+                sortOrder: 1,
+                isAvailable: true,
+                filesCount: 5,
+                qrCode: 'LOC_ADMIN_A',
+                createdAt: new Date('2024-01-15'),
+                updatedAt: new Date('2024-01-15')
+            },
+            {
+                id: 'room_finance',
+                name: 'Bilik Kewangan',
+                type: 'room',
+                parentId: null,
+                description: 'Bilik penyimpanan dokumen kewangan',
+                status: 'occupied',
+                sortOrder: 2,
+                isAvailable: true,
+                filesCount: 12,
+                qrCode: 'LOC_FINANCE',
+                createdAt: new Date('2024-01-15'),
+                updatedAt: new Date('2024-01-15')
+            },
+            {
+                id: 'room_archive',
+                name: 'Bilik Arkib',
+                type: 'room',
+                parentId: null,
+                description: 'Bilik arkib untuk fail lama',
+                status: 'empty',
+                sortOrder: 3,
+                isAvailable: true,
+                filesCount: 0,
+                qrCode: 'LOC_ARCHIVE',
+                createdAt: new Date('2024-01-15'),
+                updatedAt: new Date('2024-01-15')
+            },
+            
+            // Rak untuk Bilik Pentadbiran A
+            {
+                id: 'rack_a1',
+                name: 'Rak A1',
+                type: 'rack',
+                parentId: 'room_admin_a',
+                description: 'Rak pertama di bilik pentadbiran',
+                status: 'occupied',
+                sortOrder: 1,
+                isAvailable: true,
+                filesCount: 3,
+                qrCode: 'LOC_ADMIN_A_R1',
+                createdAt: new Date('2024-01-15'),
+                updatedAt: new Date('2024-01-15')
+            },
+            {
+                id: 'rack_a2',
+                name: 'Rak A2',
+                type: 'rack',
+                parentId: 'room_admin_a',
+                description: 'Rak kedua di bilik pentadbiran',
+                status: 'occupied',
+                sortOrder: 2,
+                isAvailable: true,
+                filesCount: 2,
+                qrCode: 'LOC_ADMIN_A_R2',
+                createdAt: new Date('2024-01-15'),
+                updatedAt: new Date('2024-01-15')
+            },
+            
+            // Rak untuk Bilik Kewangan
+            {
+                id: 'rack_f1',
+                name: 'Rak F1',
+                type: 'rack',
+                parentId: 'room_finance',
+                description: 'Rak pertama di bilik kewangan',
+                status: 'occupied',
+                sortOrder: 1,
+                isAvailable: true,
+                filesCount: 8,
+                qrCode: 'LOC_FINANCE_R1',
+                createdAt: new Date('2024-01-15'),
+                updatedAt: new Date('2024-01-15')
+            },
+            {
+                id: 'rack_f2',
+                name: 'Rak F2',
+                type: 'rack',
+                parentId: 'room_finance',
+                description: 'Rak kedua di bilik kewangan',
+                status: 'occupied',
+                sortOrder: 2,
+                isAvailable: true,
+                filesCount: 4,
+                qrCode: 'LOC_FINANCE_R2',
+                createdAt: new Date('2024-01-15'),
+                updatedAt: new Date('2024-01-15')
+            },
+            
+            // Slot untuk Rak A1
+            {
+                id: 'slot_a1_1',
+                name: 'Slot A1-1',
+                type: 'slot',
+                parentId: 'rack_a1',
+                description: 'Slot pertama di rak A1',
+                status: 'occupied',
+                sortOrder: 1,
+                isAvailable: true,
+                filesCount: 1,
+                qrCode: 'LOC_ADMIN_A1_S1',
+                createdAt: new Date('2024-01-15'),
+                updatedAt: new Date('2024-01-15')
+            },
+            {
+                id: 'slot_a1_2',
+                name: 'Slot A1-2',
+                type: 'slot',
+                parentId: 'rack_a1',
+                description: 'Slot kedua di rak A1',
+                status: 'occupied',
+                sortOrder: 2,
+                isAvailable: true,
+                filesCount: 1,
+                qrCode: 'LOC_ADMIN_A1_S2',
+                createdAt: new Date('2024-01-15'),
+                updatedAt: new Date('2024-01-15')
+            },
+            {
+                id: 'slot_a1_3',
+                name: 'Slot A1-3',
+                type: 'slot',
+                parentId: 'rack_a1',
+                description: 'Slot ketiga di rak A1',
+                status: 'occupied',
+                sortOrder: 3,
+                isAvailable: true,
+                filesCount: 1,
+                qrCode: 'LOC_ADMIN_A1_S3',
+                createdAt: new Date('2024-01-15'),
+                updatedAt: new Date('2024-01-15')
+            },
+            
+            // Slot untuk Rak A2
+            {
+                id: 'slot_a2_1',
+                name: 'Slot A2-1',
+                type: 'slot',
+                parentId: 'rack_a2',
+                description: 'Slot pertama di rak A2',
+                status: 'occupied',
+                sortOrder: 1,
+                isAvailable: true,
+                filesCount: 1,
+                qrCode: 'LOC_ADMIN_A2_S1',
+                createdAt: new Date('2024-01-15'),
+                updatedAt: new Date('2024-01-15')
+            },
+            {
+                id: 'slot_a2_2',
+                name: 'Slot A2-2',
+                type: 'slot',
+                parentId: 'rack_a2',
+                description: 'Slot kedua di rak A2',
+                status: 'occupied',
+                sortOrder: 2,
+                isAvailable: true,
+                filesCount: 1,
+                qrCode: 'LOC_ADMIN_A2_S2',
+                createdAt: new Date('2024-01-15'),
+                updatedAt: new Date('2024-01-15')
+            }
+        ];
+        
+        this.filteredLocations = [...this.locations];
+        this.updateStatistics();
+        this.renderCurrentView();
+        this.populateFilters();
+        hideLoading();
+        
+        showAlert('Data dummy lokasi telah dimuatkan', 'info');
+    }
+
     showEmptyState() {
         const container = this.currentView === 'tree' ? 
             document.getElementById('locationTree') : 
@@ -185,9 +385,9 @@ class LocationManager {
                     <i class="fas fa-database fa-3x text-muted mb-3"></i>
                     <h5 class="text-muted">Tiada data lokasi</h5>
                     <p class="text-muted">Sila setup data sample atau tambah lokasi baru</p>
-                    <a href="/setup-locations.html" class="btn btn-primary">
-                        <i class="fas fa-plus me-1"></i>Setup Data Sample
-                    </a>
+                    <button class="btn btn-primary" onclick="locationManager.loadDummyData()">
+                        <i class="fas fa-plus me-1"></i>Load Data Dummy
+                    </button>
                 </div>
             `;
         }

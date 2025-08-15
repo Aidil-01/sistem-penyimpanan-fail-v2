@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Dummy Data - Firebase</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .upload-card {
+            transition: all 0.3s ease;
+        }
+        .upload-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+        .progress-item {
+            padding: 0.5rem;
+            margin: 0.25rem 0;
+            border-radius: 0.25rem;
+            border-left: 4px solid #dee2e6;
+        }
+        .progress-item.success {
+            background-color: #d1edff;
+            border-left-color: #0d6efd;
+        }
+        .progress-item.error {
+            background-color: #f8d7da;
+            border-left-color: #dc3545;
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <div class="container py-4">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="text-center mb-4">
+                    <h1 class="h2 text-primary">
+                        <i class="fas fa-cloud-upload-alt me-2"></i>Upload Dummy Data ke Firebase
+                    </h1>
+                    <p class="text-muted">Upload data sampel untuk sistem penyimpanan fail</p>
+                </div>
+
+                <!-- Alert Container -->
+                <div id="alertContainer"></div>
+
+                <!-- Upload Progress -->
+                <div class="card mb-4" id="progressCard" style="display: none;">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-tasks me-2"></i>Progress Upload
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div id="progressList"></div>
+                        <div class="progress mt-3">
+                            <div id="mainProgress" class="progress-bar" role="progressbar" style="width: 0%"></div>
+                        </div>
+                        <small class="text-muted mt-2 d-block" id="progressText">Sedia untuk upload...</small>
+                    </div>
+                </div>
+
+                <!-- Data Summary -->
+                <div class="row mb-4">
+                    <div class="col-md-3 col-6 mb-3">
+                        <div class="card upload-card text-center">
+                            <div class="card-body">
+                                <i class="fas fa-map-marker-alt fa-2x text-primary mb-2"></i>
+                                <h6 class="card-title">Lokasi</h6>
+                                <p class="card-text text-muted">3 Bilik + Rak & Slot</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6 mb-3">
+                        <div class="card upload-card text-center">
+                            <div class="card-body">
+                                <i class="fas fa-folder fa-2x text-success mb-2"></i>
+                                <h6 class="card-title">Fail</h6>
+                                <p class="card-text text-muted">5 Dokumen</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6 mb-3">
+                        <div class="card upload-card text-center">
+                            <div class="card-body">
+                                <i class="fas fa-users fa-2x text-warning mb-2"></i>
+                                <h6 class="card-title">Pengguna</h6>
+                                <p class="card-text text-muted">3 Staff</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6 mb-3">
+                        <div class="card upload-card text-center">
+                            <div class="card-body">
+                                <i class="fas fa-handshake fa-2x text-info mb-2"></i>
+                                <h6 class="card-title">Peminjaman</h6>
+                                <p class="card-text text-muted">1 Rekod</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-rocket me-2"></i>Upload Actions
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <button id="testConnectionBtn" class="btn btn-outline-info w-100">
+                                    <i class="fas fa-wifi me-2"></i>Test Connection
+                                </button>
+                            </div>
+                            <div class="col-md-4">
+                                <button id="uploadDataBtn" class="btn btn-success w-100">
+                                    <i class="fas fa-upload me-2"></i>Upload Data
+                                </button>
+                            </div>
+                            <div class="col-md-4">
+                                <button id="cleanDataBtn" class="btn btn-danger w-100">
+                                    <i class="fas fa-trash me-2"></i>Clean All Data
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <hr class="my-3">
+                        
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <button id="checkDataBtn" class="btn btn-outline-secondary w-100">
+                                    <i class="fas fa-search me-2"></i>Check Current Data
+                                </button>
+                            </div>
+                            <div class="col-md-6">
+                                <a href="index.html" class="btn btn-outline-primary w-100">
+                                    <i class="fas fa-arrow-right me-2"></i>Go to System
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Instructions -->
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-info-circle me-2"></i>Arahan
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <ol>
+                            <li><strong>Test Connection</strong> - Pastikan Firebase connection berfungsi</li>
+                            <li><strong>Upload Data</strong> - Upload semua dummy data ke Firebase</li>
+                            <li><strong>Check Current Data</strong> - Semak data yang ada dalam Firebase</li>
+                            <li><strong>Go to System</strong> - Pergi ke sistem utama setelah upload</li>
+                        </ol>
+                        
+                        <div class="alert alert-warning mt-3">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>Amaran:</strong> "Clean All Data" akan memadam SEMUA data dalam Firebase. Gunakan dengan berhati-hati!
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script type="module">
+        import { db, collection, addDoc, getDocs, serverTimestamp, writeBatch, doc } from './js/firebase-config.js';
+
+        // Utility functions
+        function showAlert(message, type = 'info') {
+            const alertContainer = document.getElementById('alertContainer');
+            const alertId = 'alert_' + Date.now();
+            const alertHtml = `
+                <div id="${alertId}" class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    <i class="fas fa-${getIconForType(type)} me-2"></i>
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            alertContainer.insertAdjacentHTML('beforeend', alertHtml);
+            
+            setTimeout(() => {
+                const alert = document.getElementById(alertId);
+                if (alert) {
+                    const bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                }
+            }, 5000);
+        }
+
+        function getIconForType(type) {
+            const icons = {
+                'success': 'check-circle',
+                'danger': 'exclamation-circle', 
+                'warning': 'exclamation-triangle',
+                'info': 'info-circle'
+            };
+            return icons[type] || 'info-circle';
+        }
+
+        function updateProgress(current, total, text) {
+            const progress = (current / total) * 100;
+            document.getElementById('mainProgress').style.width = progress + '%';
+            document.getElementById('progressText').textContent = text;
+        }
+
+        function addProgressItem(text, success = true) {
+            const progressList = document.getElementById('progressList');
+            const item = document.createElement('div');
+            item.className = `progress-item ${success ? 'success' : 'error'}`;
+            item.innerHTML = `
+                <i class="fas fa-${success ? 'check' : 'times'} me-2"></i>
+                ${text}
+            `;
+            progressList.appendChild(item);
+        }
+
+        // Dummy data definitions
+        const dummyData = {
+            locations: [
+                {
+                    name: 'Bilik Pentadbiran A',
+                    type: 'room',
+                    parentId: null,
+                    description: 'Bilik utama untuk fail pentadbiran',
+                    status: 'empty',
+                    sortOrder: 1,
+                    isAvailable: true,
+                    filesCount: 5,
+                    qrCode: 'LOC_ADMIN_A',
+                    createdAt: serverTimestamp(),
+                    updatedAt: serverTimestamp()
+                },
+                {
+                    name: 'Bilik Kewangan',
+                    type: 'room',
+                    parentId: null,
+                    description: 'Bilik penyimpanan dokumen kewangan',
+                    status: 'occupied',
+                    sortOrder: 2,
+                    isAvailable: true,
+                    filesCount: 12,
+                    qrCode: 'LOC_FINANCE',
+                    createdAt: serverTimestamp(),
+                    updatedAt: serverTimestamp()
+                },
+                {
+                    name: 'Bilik Arkib',
+                    type: 'room',
+                    parentId: null,
+                    description: 'Bilik arkib untuk fail lama',
+                    status: 'empty',
+                    sortOrder: 3,
+                    isAvailable: true,
+                    filesCount: 0,
+                    qrCode: 'LOC_ARCHIVE',
+                    createdAt: serverTimestamp(),
+                    updatedAt: serverTimestamp()
+                }
+            ],
+            files: [
+                {
+                    file_id: 'ADM001',
+                    title: 'Surat Arahan Baharu 2024',
+                    department: 'Pentadbiran',
+                    category: 'Surat Arahan',
+                    description: 'Surat arahan mengenai prosedur baharu',
+                    status: 'tersedia',
+                    created_by: 'admin',
+                    tags: ['surat', 'arahan', '2024'],
+                    createdAt: serverTimestamp(),
+                    updatedAt: serverTimestamp()
+                },
+                {
+                    file_id: 'KEW001',
+                    title: 'Laporan Kewangan Q1 2024',
+                    department: 'Kewangan',
+                    category: 'Laporan',
+                    description: 'Laporan kewangan suku tahun pertama',
+                    status: 'tersedia',
+                    created_by: 'admin',
+                    tags: ['laporan', 'kewangan', 'Q1'],
+                    createdAt: serverTimestamp(),
+                    updatedAt: serverTimestamp()
+                },
+                {
+                    file_id: 'KEW002',
+                    title: 'Baucer Perbelanjaan Januari',
+                    department: 'Kewangan',
+                    category: 'Baucer',
+                    description: 'Baucer perbelanjaan untuk bulan Januari',
+                    status: 'dipinjam',
+                    created_by: 'admin',
+                    tags: ['baucer', 'januari', 'perbelanjaan'],
+                    createdAt: serverTimestamp(),
+                    updatedAt: serverTimestamp()
+                },
+                {
+                    file_id: 'ADM002',
+                    title: 'Minit Mesyuarat Bulanan',
+                    department: 'Pentadbiran',
+                    category: 'Minit Mesyuarat',
+                    description: 'Minit mesyuarat bulanan Februari 2024',
+                    status: 'tersedia',
+                    created_by: 'staff',
+                    tags: ['minit', 'mesyuarat', 'februari'],
+                    createdAt: serverTimestamp(),
+                    updatedAt: serverTimestamp()
+                },
+                {
+                    file_id: 'ARK001',
+                    title: 'Dokumen Arkib Lama 2020',
+                    department: 'Pentadbiran',
+                    category: 'Arkiv',
+                    description: 'Dokumen arkib dari tahun 2020',
+                    status: 'arkib',
+                    created_by: 'admin',
+                    tags: ['arkib', '2020', 'lama'],
+                    createdAt: serverTimestamp(),
+                    updatedAt: serverTimestamp()
+                }
+            ],
+            users: [
+                {
+                    name: 'Ahmad Bin Ali',
+                    email: 'ahmad@tongod.gov.my',
+                    user_role: 'admin',
+                    jabatan: 'Pentadbiran',
+                    phone: '088-123456',
+                    is_active: true,
+                    createdAt: serverTimestamp(),
+                    updatedAt: serverTimestamp()
+                },
+                {
+                    name: 'Siti Aminah',
+                    email: 'siti@tongod.gov.my',
+                    user_role: 'staff_jabatan',
+                    jabatan: 'Kewangan',
+                    phone: '088-123457',
+                    is_active: true,
+                    createdAt: serverTimestamp(),
+                    updatedAt: serverTimestamp()
+                },
+                {
+                    name: 'Raj Kumar',
+                    email: 'raj@tongod.gov.my',
+                    user_role: 'staff_pembantu',
+                    jabatan: 'Pentadbiran',
+                    phone: '088-123458',
+                    is_active: true,
+                    createdAt: serverTimestamp(),
+                    updatedAt: serverTimestamp()
+                }
+            ],
+            borrowings: [
+                {
+                    file_id: 'KEW002',
+                    borrower_name: 'Siti Aminah',
+                    borrow_date: serverTimestamp(),
+                    expected_return_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+                    purpose: 'Untuk audit kewangan',
+                    status: 'dipinjam',
+                    created_by: 'admin',
+                    createdAt: serverTimestamp(),
+                    updatedAt: serverTimestamp()
+                }
+            ]
+        };
+
+        // Test Firebase connection
+        async function testConnection() {
+            try {
+                if (!db) {
+                    throw new Error('Firebase not initialized');
+                }
+                
+                const testQuery = collection(db, 'test');
+                await getDocs(testQuery);
+                
+                showAlert('✅ Firebase connection successful!', 'success');
+                return true;
+                
+            } catch (error) {
+                showAlert(`❌ Connection failed: ${error.message}`, 'danger');
+                console.error('Connection test failed:', error);
+                return false;
+            }
+        }
+
+        // Upload dummy data
+        async function uploadDummyData() {
+            try {
+                // Test connection first
+                if (!(await testConnection())) {
+                    return;
+                }
+                
+                document.getElementById('progressCard').style.display = 'block';
+                document.getElementById('progressList').innerHTML = '';
+                
+                const collections = Object.keys(dummyData);
+                let currentStep = 0;
+                const totalSteps = collections.length;
+                
+                updateProgress(0, totalSteps, 'Starting upload...');
+                
+                for (const collectionName of collections) {
+                    const data = dummyData[collectionName];
+                    updateProgress(currentStep, totalSteps, `Uploading ${collectionName}...`);
+                    
+                    try {
+                        for (const item of data) {
+                            await addDoc(collection(db, collectionName), item);
+                        }
+                        
+                        addProgressItem(`✅ Uploaded ${data.length} ${collectionName}`, true);
+                        currentStep++;
+                        
+                    } catch (error) {
+                        addProgressItem(`❌ Failed to upload ${collectionName}: ${error.message}`, false);
+                        throw error;
+                    }
+                }
+                
+                updateProgress(totalSteps, totalSteps, 'Upload completed!');
+                showAlert(`🎉 Successfully uploaded all dummy data!`, 'success');
+                
+            } catch (error) {
+                showAlert(`❌ Upload failed: ${error.message}`, 'danger');
+                console.error('Upload failed:', error);
+            }
+        }
+
+        // Clean all data
+        async function cleanAllData() {
+            if (!confirm('⚠️ AMARAN: Ini akan memadam SEMUA data dalam Firebase. Adakah anda pasti?')) {
+                return;
+            }
+            
+            try {
+                document.getElementById('progressCard').style.display = 'block';
+                document.getElementById('progressList').innerHTML = '';
+                
+                const collections = ['locations', 'files', 'users', 'borrowing_records'];
+                let currentStep = 0;
+                const totalSteps = collections.length;
+                
+                updateProgress(0, totalSteps, 'Starting cleanup...');
+                
+                for (const collectionName of collections) {
+                    updateProgress(currentStep, totalSteps, `Cleaning ${collectionName}...`);
+                    
+                    try {
+                        const snapshot = await getDocs(collection(db, collectionName));
+                        const batch = writeBatch(db);
+                        
+                        snapshot.docs.forEach(document => {
+                            batch.delete(doc(db, collectionName, document.id));
+                        });
+                        
+                        if (snapshot.docs.length > 0) {
+                            await batch.commit();
+                        }
+                        
+                        addProgressItem(`🗑️ Cleaned ${collectionName}: ${snapshot.docs.length} documents`, true);
+                        currentStep++;
+                        
+                    } catch (error) {
+                        addProgressItem(`❌ Failed to clean ${collectionName}: ${error.message}`, false);
+                        throw error;
+                    }
+                }
+                
+                updateProgress(totalSteps, totalSteps, 'Cleanup completed!');
+                showAlert('🧹 All data cleaned successfully!', 'success');
+                
+            } catch (error) {
+                showAlert(`❌ Cleanup failed: ${error.message}`, 'danger');
+                console.error('Cleanup failed:', error);
+            }
+        }
+
+        // Check current data
+        async function checkCurrentData() {
+            try {
+                const collections = ['locations', 'files', 'users', 'borrowing_records'];
+                const counts = {};
+                
+                for (const collectionName of collections) {
+                    const snapshot = await getDocs(collection(db, collectionName));
+                    counts[collectionName] = snapshot.size;
+                }
+                
+                const message = `
+                    📊 Data Semasa dalam Firebase:<br>
+                    • Lokasi: ${counts.locations || 0}<br>
+                    • Fail: ${counts.files || 0}<br>
+                    • Pengguna: ${counts.users || 0}<br>
+                    • Peminjaman: ${counts.borrowing_records || 0}
+                `;
+                
+                showAlert(message, 'info');
+                
+            } catch (error) {
+                showAlert(`❌ Failed to check data: ${error.message}`, 'danger');
+                console.error('Check data failed:', error);
+            }
+        }
+
+        // Event listeners
+        document.getElementById('testConnectionBtn').addEventListener('click', testConnection);
+        document.getElementById('uploadDataBtn').addEventListener('click', uploadDummyData);
+        document.getElementById('cleanDataBtn').addEventListener('click', cleanAllData);
+        document.getElementById('checkDataBtn').addEventListener('click', checkCurrentData);
+        
+        // Auto-test connection on load
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                showAlert('Sedia untuk upload dummy data ke Firebase', 'info');
+            }, 500);
+        });
+    </script>
+</body>
+</html>
