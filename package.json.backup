@@ -1,0 +1,28 @@
+{
+  "name": "sistem-penyimpanan-fail-tongod",
+  "version": "2.0.0",
+  "description": "File Storage Management System for Tongod District Office",
+  "main": "upload-dummy-data.js",
+  "scripts": {
+    "upload-data": "node upload-dummy-data.js",
+    "clean-upload": "node upload-dummy-data.js --clean",
+    "deploy": "firebase deploy",
+    "serve": "firebase serve"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.0.0"
+  },
+  "devDependencies": {
+    "firebase-tools": "^13.0.0"
+  },
+  "keywords": [
+    "firebase",
+    "file-management",
+    "document-storage",
+    "pwa",
+    "malaysia",
+    "government"
+  ],
+  "author": "Aidil",
+  "license": "MIT"
+}

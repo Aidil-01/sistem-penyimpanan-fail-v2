@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Instant PWA Icon Fix - SPF Tongod</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .status { padding: 15px; border-radius: 5px; margin: 10px 0; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #cce5ff; color: #004085; }
+        button { background: #3498db; color: white; border: none; padding: 12px 24px; border-radius: 5px; cursor: pointer; margin: 5px; }
+        button:hover { background: #2980b9; }
+        .icon-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 15px; margin: 20px 0; }
+        .icon-item { text-align: center; border: 1px solid #ddd; padding: 10px; border-radius: 5px; }
+        canvas { border: 1px solid #ccc; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Instant PWA Icon Fix - SPF Tongod</h1>
+    
+    <div id="status" class="status info">Click the button below to automatically fix your PWA icons!</div>
+    
+    <button onclick="fixIconsInstantly()" id="fixBtn">⚡ Fix PWA Icons Instantly</button>
+    <button onclick="downloadAllIcons()" id="downloadBtn" style="display:none;">📥 Download All Icons</button>
+    
+    <div id="preview" class="icon-grid"></div>
+    
+    <div id="instructions" style="display:none; background: #e8f5e8; padding: 15px; border-radius: 5px; margin: 20px 0;">
+        <h3>🚀 Next Steps:</h3>
+        <ol>
+            <li>All PWA icons have been generated and downloaded</li>
+            <li>Place the downloaded PNG files in your <code>assets/icons/</code> directory</li>
+            <li>Run <code>firebase deploy --only hosting</code></li>
+            <li>Your PWA will now have proper icons!</li>
+        </ol>
+    </div>
+
+    <script>
+        const iconSizes = [72, 96, 128, 144, 152, 192, 256, 384, 512];
+        let generatedIcons = {};
+
+        function updateStatus(message, type = 'info') {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = message;
+            statusEl.className = `status ${type}`;
+        }
+
+        function createIconForSize(size) {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = size;
+            canvas.height = size;
+
+            // Create the blue background with rounded corners
+            const gradient = ctx.createLinearGradient(0, 0, size, size);
+            gradient.addColorStop(0, '#3b82f6');
+            gradient.addColorStop(1, '#1e40af');
+            
+            // Draw rounded rectangle background
+            const radius = size * 0.18;
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.roundRect(0, 0, size, size, radius);
+            ctx.fill();
+
+            // Draw white folder icon
+            ctx.fillStyle = 'white';
+            const margin = size * 0.15;
+            const iconSize = size - (margin * 2);
+            
+            // Folder body
+            const folderY = margin + iconSize * 0.25;
+            const folderHeight = iconSize * 0.6;
+            const folderWidth = iconSize * 0.8;
+            
+            ctx.fillRect(margin, folderY, folderWidth, folderHeight);
+            
+            // Folder tab
+            const tabWidth = folderWidth * 0.4;
+            const tabHeight = iconSize * 0.15;
+            ctx.fillRect(margin, folderY - tabHeight, tabWidth, tabHeight);
+            
+            // Document icon on the folder
+            const docSize = iconSize * 0.3;
+            const docX = margin + folderWidth * 0.4;
+            const docY = folderY - docSize * 0.3;
+            
+            ctx.fillStyle = '#e5e7eb';
+            ctx.fillRect(docX, docY, docSize, docSize * 1.2);
+            
+            // Document corner fold
+            const foldSize = docSize * 0.2;
+            ctx.fillStyle = '#d1d5db';
+            ctx.beginPath();
+            ctx.moveTo(docX + docSize - foldSize, docY);
+            ctx.lineTo(docX + docSize, docY + foldSize);
+            ctx.lineTo(docX + docSize, docY);
+            ctx.fill();
+            
+            // Document lines
+            ctx.strokeStyle = '#9ca3af';
+            ctx.lineWidth = Math.max(1, size / 200);
+            const lineY = docY + docSize * 0.3;
+            const lineSpacing = docSize * 0.15;
+            
+            for (let i = 0; i < 3; i++) {
+                ctx.beginPath();
+                ctx.moveTo(docX + docSize * 0.1, lineY + (i * lineSpacing));
+                ctx.lineTo(docX + docSize * 0.8, lineY + (i * lineSpacing));
+                ctx.stroke();
+            }
+
+            // Add text only for larger sizes
+            if (size >= 144) {
+                ctx.fillStyle = 'white';
+                ctx.font = `bold ${size * 0.08}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.fillText('SISTEM', size / 2, size * 0.82);
+                
+                ctx.font = `bold ${size * 0.06}px Arial`;
+                ctx.fillText('PENYIMPANAN FAIL', size / 2, size * 0.92);
+            }
+
+            return canvas;
+        }
+
+        async function fixIconsInstantly() {
+            updateStatus('🎨 Generating PWA icons...', 'info');
+            document.getElementById('fixBtn').disabled = true;
+            
+            const previewContainer = document.getElementById('preview');
+            previewContainer.innerHTML = '';
+            generatedIcons = {};
+            
+            try {
+                for (let i = 0; i < iconSizes.length; i++) {
+                    const size = iconSizes[i];
+                    
+                    // Create icon canvas
+                    const canvas = createIconForSize(size);
+                    
+                    // Convert to blob
+                    const blob = await new Promise(resolve => {
+                        canvas.toBlob(resolve, 'image/png', 1.0);
+                    });
+                    
+                    generatedIcons[size] = blob;
+                    
+                    // Create preview
+                    const previewCanvas = document.createElement('canvas');
+                    const previewSize = Math.min(size, 100);
+                    previewCanvas.width = previewSize;
+                    previewCanvas.height = previewSize;
+                    const previewCtx = previewCanvas.getContext('2d');
+                    previewCtx.drawImage(canvas, 0, 0, previewSize, previewSize);
+                    
+                    const iconItem = document.createElement('div');
+                    iconItem.className = 'icon-item';
+                    iconItem.innerHTML = `
+                        <div>${previewCanvas.outerHTML}</div>
+                        <div><strong>${size}x${size}</strong></div>
+                        <small>${(blob.size / 1024).toFixed(1)}KB</small>
+                    `;
+                    previewContainer.appendChild(iconItem);
+                    
+                    // Small delay for UI update
+                    await new Promise(resolve => setTimeout(resolve, 50));
+                }
+                
+                updateStatus('✅ All PWA icons generated successfully!', 'success');
+                document.getElementById('downloadBtn').style.display = 'inline-block';
+                
+            } catch (error) {
+                updateStatus(`❌ Error: ${error.message}`, 'error');
+            }
+            
+            document.getElementById('fixBtn').disabled = false;
+        }
+
+        function downloadAllIcons() {
+            updateStatus('📥 Downloading all icons...', 'info');
+            
+            iconSizes.forEach((size, index) => {
+                setTimeout(() => {
+                    const blob = generatedIcons[size];
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `icon-${size}x${size}.png`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    
+                    if (index === iconSizes.length - 1) {
+                        updateStatus('✅ All icons downloaded!', 'success');
+                        document.getElementById('instructions').style.display = 'block';
+                    }
+                }, index * 200);
+            });
+        }
+
+        // Add roundRect polyfill for older browsers
+        if (!CanvasRenderingContext2D.prototype.roundRect) {
+            CanvasRenderingContext2D.prototype.roundRect = function(x, y, width, height, radius) {
+                this.beginPath();
+                this.moveTo(x + radius, y);
+                this.lineTo(x + width - radius, y);
+                this.quadraticCurveTo(x + width, y, x + width, y + radius);
+                this.lineTo(x + width, y + height - radius);
+                this.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+                this.lineTo(x + radius, y + height);
+                this.quadraticCurveTo(x, y + height, x, y + height - radius);
+                this.lineTo(x, y + radius);
+                this.quadraticCurveTo(x, y, x + radius, y);
+                this.closePath();
+            };
+        }
+    </script>
+</body>
+</html>

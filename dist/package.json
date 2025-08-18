@@ -1,0 +1,29 @@
+{
+  "name": "sistem-penyimpanan-fail-firebase",
+  "version": "1.0.0",
+  "description": "Firebase PWA for file storage management system",
+  "main": "index.html",
+  "scripts": {
+    "serve": "firebase serve",
+    "deploy": "firebase deploy",
+    "build": "echo 'No build step required'",
+    "start": "firebase serve"
+  },
+  "keywords": [
+    "firebase",
+    "pwa",
+    "file-management",
+    "firestore"
+  ],
+  "author": "SPF Tongod",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "firebase-admin": "^12.0.0"
+  },
+  "devDependencies": {
+    "firebase-tools": "^13.0.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}

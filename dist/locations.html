@@ -1,0 +1,413 @@
+<!-- Location Management Page Template -->
+<div class="location-management">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">
+            <i class="fas fa-sitemap me-2"></i>Pengurusan Lokasi
+        </h1>
+        <div class="btn-group" role="group">
+            <button type="button" class="btn btn-primary" id="addLocationBtn">
+                <i class="fas fa-plus me-1"></i>Tambah Lokasi
+            </button>
+            <div class="btn-group" role="group">
+                <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                    <i class="fas fa-download me-1"></i>Export
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#" onclick="exportLocations('json')">JSON</a></li>
+                    <li><a class="dropdown-item" href="#" onclick="exportLocations('csv')">CSV</a></li>
+                    <li><a class="dropdown-item" href="#" onclick="exportLocations('pdf')">PDF</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="location-stats mb-4">
+        <div class="row">
+            <div class="col-md-3 col-6">
+                <div class="card stat-card text-center">
+                    <div class="card-body">
+                        <span class="stat-number" id="totalLocations">0</span>
+                        <div class="stat-label">Total Lokasi</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="card stat-card-secondary text-center">
+                    <div class="card-body">
+                        <span class="stat-number" id="totalFiles">0</span>
+                        <div class="stat-label">Total Fail</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="card stat-card-warning text-center">
+                    <div class="card-body">
+                        <span class="stat-number" id="totalEmpty">0</span>
+                        <div class="stat-label">Lokasi Kosong</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="card stat-card-danger text-center">
+                    <div class="card-body">
+                        <span class="stat-number" id="totalOccupied">0</span>
+                        <div class="stat-label">Ada Fail</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Toggle and Search -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="btn-group" role="group">
+                <button type="button" class="btn btn-primary" id="treeViewBtn">
+                    <i class="fas fa-sitemap me-1"></i>Tree View
+                </button>
+                <button type="button" class="btn btn-outline-primary" id="listViewBtn">
+                    <i class="fas fa-list me-1"></i>List View
+                </button>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="d-flex">
+                <div class="input-group">
+                    <input type="text" class="form-control" id="searchInput" 
+                           placeholder="Cari lokasi...">
+                    <button class="btn btn-outline-secondary" type="button" id="searchBtn">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bulk Actions Panel -->
+    <div id="bulkActionsPanel" class="bulk-actions d-none">
+        <div class="card">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <span id="selectedCount">0</span> lokasi dipilih
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-sm btn-warning" id="bulkStatusBtn">
+                                <i class="fas fa-edit me-1"></i>Tukar Status
+                            </button>
+                            <button type="button" class="btn btn-sm btn-success" id="bulkPrintBtn">
+                                <i class="fas fa-print me-1"></i>Print Label
+                            </button>
+                            <button type="button" class="btn btn-sm btn-info" id="bulkExportBtn">
+                                <i class="fas fa-download me-1"></i>Export
+                            </button>
+                            <button type="button" class="btn btn-sm btn-danger" id="bulkDeleteBtn">
+                                <i class="fas fa-trash me-1"></i>Padam
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tree View Container -->
+    <div id="treeViewContainer" class="mb-4">
+        <div class="card">
+            <div class="card-header">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button type="button" class="btn btn-outline-secondary" id="expandAllBtn">
+                                <i class="fas fa-plus-square me-1"></i>Expand All
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" id="collapseAllBtn">
+                                <i class="fas fa-minus-square me-1"></i>Collapse All
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" id="refreshTreeBtn">
+                                <i class="fas fa-sync me-1"></i>Refresh
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" id="enableDragDrop">
+                            <label class="form-check-label" for="enableDragDrop">
+                                <small>Enable Drag & Drop</small>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div id="locationTree" class="location-tree p-3"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- List View Container -->
+    <div id="listViewContainer" class="d-none">
+        <!-- Filters -->
+        <div class="row mb-3">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <select id="typeFilter" class="form-select form-select-sm">
+                                    <option value="">Semua Jenis</option>
+                                    <option value="room">Bilik</option>
+                                    <option value="rack">Rak</option>
+                                    <option value="slot">Slot</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <select id="statusFilter" class="form-select form-select-sm">
+                                    <option value="">Semua Status</option>
+                                    <option value="empty">Kosong</option>
+                                    <option value="occupied">Ada Fail</option>
+                                    <option value="maintenance">Penyelenggaraan</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <select id="roomFilter" class="form-select form-select-sm">
+                                    <option value="">Semua Bilik</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <button type="button" class="btn btn-primary btn-sm" id="applyFilters">
+                                    <i class="fas fa-filter me-1"></i>Filter
+                                </button>
+                                <button type="button" class="btn btn-secondary btn-sm" id="clearFilters">Reset</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Location Cards -->
+        <div class="row" id="locationCards">
+            <!-- Dynamic location cards will be inserted here -->
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="d-none">
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-map-marker-alt fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">Tiada lokasi dijumpai</h5>
+                    <p class="text-muted">Mulakan dengan menambah lokasi baru.</p>
+                    <button type="button" class="btn btn-primary" id="addFirstLocationBtn">
+                        <i class="fas fa-plus me-1"></i>Tambah Lokasi Pertama
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading State -->
+    <div id="loadingState" class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-3">Memuatkan lokasi...</p>
+    </div>
+</div>
+
+<!-- Add/Edit Location Modal -->
+<div class="modal fade" id="locationModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="locationModalTitle">Tambah Lokasi Baru</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="locationForm">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Jenis Lokasi <span class="text-danger">*</span></label>
+                                <select id="locationType" class="form-select" required>
+                                    <option value="">Pilih Jenis</option>
+                                    <option value="room">Bilik</option>
+                                    <option value="rack">Rak</option>
+                                    <option value="slot">Slot</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Parent Lokasi</label>
+                                <select id="parentLocation" class="form-select">
+                                    <option value="">Tiada Parent (Root Level)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Nama Lokasi <span class="text-danger">*</span></label>
+                        <input type="text" id="locationName" class="form-control" required placeholder="Nama lokasi">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Keterangan</label>
+                        <textarea id="locationDescription" class="form-control" rows="3" placeholder="Keterangan tambahan..."></textarea>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Status</label>
+                                <select id="locationStatus" class="form-select">
+                                    <option value="empty">Kosong</option>
+                                    <option value="occupied">Ada Fail</option>
+                                    <option value="maintenance">Penyelenggaraan</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Urutan</label>
+                                <input type="number" id="locationOrder" class="form-control" value="0" min="0">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-check">
+                        <input type="checkbox" id="locationAvailable" class="form-check-input" checked>
+                        <label class="form-check-label" for="locationAvailable">Tersedia untuk digunakan</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary" id="saveLocationBtn">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- QR Code Modal -->
+<div class="modal fade" id="qrModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">QR Code Lokasi</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <div id="qrCodeContainer"></div>
+                <p class="mt-3" id="qrCodeText"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                <button type="button" class="btn btn-primary" id="downloadQrBtn">
+                    <i class="fas fa-download me-1"></i>Muat Turun
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.location-tree {
+    max-height: 70vh;
+    overflow-y: auto;
+    background: white;
+    border-radius: 0.5rem;
+}
+
+.location-card {
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.location-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+}
+
+.location-card.selected {
+    border: 2px solid var(--bs-primary);
+    box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
+}
+
+.files-count {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    color: white;
+    border-radius: 50%;
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: bold;
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+}
+
+.bulk-actions {
+    margin-bottom: 1rem;
+}
+
+.tree-node {
+    padding: 0.5rem;
+    border-radius: 0.25rem;
+    margin: 0.25rem 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.tree-node:hover {
+    background-color: #f8f9fa;
+}
+
+.tree-node.selected {
+    background-color: var(--bs-primary);
+    color: white;
+}
+
+.tree-children {
+    margin-left: 1.5rem;
+    border-left: 2px solid #dee2e6;
+    padding-left: 1rem;
+}
+
+.status-indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-left: 0.5rem;
+}
+
+.status-indicator.empty { background-color: #28a745; }
+.status-indicator.occupied { background-color: #dc3545; }
+.status-indicator.maintenance { background-color: #ffc107; }
+
+@media (max-width: 768px) {
+    .stat-card .card-body {
+        padding: 1rem 0.5rem;
+    }
+    
+    .location-tree {
+        max-height: 60vh;
+    }
+    
+    .btn-group-vertical .btn {
+        margin-bottom: 0.25rem;
+    }
+}
+</style>

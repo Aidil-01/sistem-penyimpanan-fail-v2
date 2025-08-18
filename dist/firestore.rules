@@ -1,0 +1,93 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // PRODUCTION RULES - Role-based access control for file storage system
+    
+    // Helper function to get user role
+    function getUserRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+    
+    // Helper function to check if user has required role
+    function hasRole(roles) {
+      return request.auth != null && getUserRole() in roles;
+    }
+    // Users collection - users can read/write their own profile
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if hasRole(['admin']);
+      allow create, update, delete: if hasRole(['admin']);
+    }
+
+    // Files collection - role-based access
+    match /files/{fileId} {
+      allow read: if request.auth != null;
+      allow create, update: if hasRole(['admin', 'staff_jabatan', 'staff_pembantu']);
+      allow delete: if hasRole(['admin', 'staff_jabatan']);
+    }
+
+    // Locations collection - enhanced rules for hierarchical structure
+    match /locations/{locationId} {
+      // Allow read for authenticated users
+      allow read: if request.auth != null;
+      
+      // Allow create for authenticated users (temporary for setup)
+      allow create: if request.auth != null && isValidLocationData();
+        
+      // Allow update for authenticated users (temporary for setup)
+      allow update: if request.auth != null && isValidLocationData();
+        
+      // Allow delete for authenticated users (temporary for setup)
+      allow delete: if request.auth != null && canDeleteLocation();
+    }
+    
+    // Helper function to validate location data
+    function isValidLocationData() {
+      let data = request.resource.data;
+      return data.keys().hasAll(['name', 'type', 'status']) &&
+             data.type in ['room', 'rack', 'slot'] &&
+             data.status in ['empty', 'occupied', 'maintenance'] &&
+             data.name is string &&
+             data.name.size() > 0 &&
+             data.name.size() <= 100 &&
+             (data.description == null || (data.description is string && data.description.size() <= 500)) &&
+             (data.parentId == null || data.parentId is string) &&
+             data.sortOrder is int &&
+             data.sortOrder >= 0 &&
+             data.isAvailable is bool &&
+             (data.filesCount == null || data.filesCount is int) &&
+             (data.qrCode == null || data.qrCode is string);
+    }
+    
+    // Helper function to check if location can be deleted
+    function canDeleteLocation() {
+      let data = resource.data;
+      return data.filesCount == null || data.filesCount == 0;
+    }
+
+    // Borrowing records - role-based access
+    match /borrowing_records/{recordId} {
+      allow read: if request.auth != null;
+      allow create, update: if hasRole(['admin', 'staff_jabatan', 'staff_pembantu']);
+      allow delete: if hasRole(['admin', 'staff_jabatan']);
+    }
+
+    // Activity logs - admin can read, authenticated users can create
+    match /activity_logs/{logId} {
+      allow read: if hasRole(['admin', 'staff_jabatan']);
+      allow create: if request.auth != null;
+    }
+
+    // Reports collection - admin and staff_jabatan can access
+    match /reports/{reportId} {
+      allow read, write: if hasRole(['admin', 'staff_jabatan']);
+    }
+
+    // File movements tracking
+    match /file_movements/{movementId} {
+      allow read: if request.auth != null;
+      allow create: if hasRole(['admin', 'staff_jabatan', 'staff_pembantu']);
+    }
+  }
+}

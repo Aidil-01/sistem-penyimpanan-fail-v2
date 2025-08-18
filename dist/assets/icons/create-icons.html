@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Generate Icons</title>
+</head>
+<body>
+    <h2>Generating PWA Icons...</h2>
+    <div id="status"></div>
+    
+    <script>
+        const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
+        
+        function createIcon(size) {
+            return new Promise((resolve) => {
+                const canvas = document.createElement('canvas');
+                canvas.width = size;
+                canvas.height = size;
+                const ctx = canvas.getContext('2d');
+                
+                // Background gradient
+                const gradient = ctx.createLinearGradient(0, 0, size, size);
+                gradient.addColorStop(0, '#2563eb');
+                gradient.addColorStop(1, '#1d4ed8');
+                
+                // Rounded rectangle background
+                const radius = size * 0.125;
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.roundRect(0, 0, size, size, radius);
+                ctx.fill();
+                
+                // File icon (simplified)
+                const iconSize = size * 0.4;
+                const x = (size - iconSize) / 2;
+                const y = size * 0.2;
+                
+                // Main rectangle
+                ctx.fillStyle = 'white';
+                ctx.fillRect(x, y, iconSize, iconSize * 1.4);
+                
+                // Folder tabs
+                ctx.fillStyle = 'rgba(255,255,255,0.8)';
+                ctx.fillRect(x + iconSize * 0.1, y + iconSize * 0.1, iconSize * 0.8, iconSize * 0.2);
+                ctx.fillRect(x + iconSize * 0.1, y + iconSize * 0.4, iconSize * 0.8, iconSize * 0.2);
+                ctx.fillRect(x + iconSize * 0.1, y + iconSize * 0.7, iconSize * 0.8, iconSize * 0.2);
+                
+                // Text
+                ctx.fillStyle = 'white';
+                ctx.font = `bold ${size * 0.08}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.fillText('SPF', size/2, size * 0.85);
+                
+                canvas.toBlob((blob) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve({
+                        size: size,
+                        data: reader.result.split(',')[1] // Get base64 part
+                    });
+                    reader.readAsDataURL(blob);
+                });
+            });
+        }
+        
+        async function generateAllIcons() {
+            const statusDiv = document.getElementById('status');
+            const icons = {};
+            
+            for (const size of sizes) {
+                statusDiv.innerHTML += `Generating ${size}x${size}...<br>`;
+                const iconData = await createIcon(size);
+                icons[`icon-${size}x${size}`] = iconData.data;
+            }
+            
+            // Create favicon (32x32)
+            statusDiv.innerHTML += 'Generating favicon...<br>';
+            const faviconData = await createIcon(32);
+            icons['favicon'] = faviconData.data;
+            
+            // Generate download links
+            statusDiv.innerHTML += '<h3>Download Icons:</h3>';
+            for (const [name, data] of Object.entries(icons)) {
+                const link = document.createElement('a');
+                link.href = `data:image/png;base64,${data}`;
+                link.download = name.includes('favicon') ? 'favicon.ico' : `${name}.png`;
+                link.textContent = `Download ${link.download}`;
+                link.style.display = 'block';
+                link.style.margin = '5px 0';
+                statusDiv.appendChild(link);
+            }
+            
+            statusDiv.innerHTML += '<br><strong>All icons generated! Click the links above to download.</strong>';
+        }
+        
+        // Start generation when page loads
+        window.onload = generateAllIcons;
+    </script>
+</body>
+</html>

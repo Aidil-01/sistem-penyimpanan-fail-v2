@@ -17,7 +17,6 @@
     "postbuild": "echo 'Build completed successfully'",
     "deploy": "firebase deploy --only hosting",
     "deploy:functions": "firebase deploy --only functions",
-    "deploy:token": "firebase deploy --only hosting --token $FIREBASE_TOKEN --non-interactive",
     "serve": "firebase serve --only hosting",
     "serve:emulators": "firebase emulators:start",
     "test": "echo 'No tests specified' && exit 0",
@@ -28,11 +27,7 @@
     "deps:audit": "npm audit --audit-level moderate",
     "deps:update": "npm update",
     "firebase:init": "firebase init",
-    "firebase:login": "firebase login",
-    "firebase:token-auth": "node firebase-token-auth.js",
-    "firebase:skip-login": "node firebase-token-auth.js && echo 'Skip-login enabled'",
-    "auth:setup": "node firebase-token-auth.js",
-    "auth:test": "firebase projects:list --project sistem-penyimpanan-fail-tongod"
+    "firebase:login": "firebase login"
   },
   "dependencies": {
     "firebase-admin": "^12.5.0"

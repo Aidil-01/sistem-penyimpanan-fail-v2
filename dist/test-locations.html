@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Locations - Sistem Penyimpanan Fail</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <div class="container py-4">
+        <div class="text-center mb-4">
+            <h1 class="h2 text-primary">
+                <i class="fas fa-map-marker-alt me-2"></i>Test Locations System
+            </h1>
+            <p class="text-muted">Test halaman untuk sistem lokasi dengan dummy data</p>
+        </div>
+
+        <!-- Alert Container -->
+        <div id="alertContainer"></div>
+
+        <!-- Test Buttons -->
+        <div class="row mb-4">
+            <div class="col-md-4 mb-2">
+                <button id="testFirebaseBtn" class="btn btn-primary w-100">
+                    <i class="fas fa-database me-2"></i>Test Firebase Connection
+                </button>
+            </div>
+            <div class="col-md-4 mb-2">
+                <button id="loadDummyBtn" class="btn btn-success w-100">
+                    <i class="fas fa-plus me-2"></i>Load Dummy Data
+                </button>
+            </div>
+            <div class="col-md-4 mb-2">
+                <button id="initLocationManagerBtn" class="btn btn-warning w-100">
+                    <i class="fas fa-cogs me-2"></i>Init Location Manager
+                </button>
+            </div>
+        </div>
+
+        <!-- Content Area -->
+        <div id="pageContent">
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-info-circle fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">Klik butang di atas untuk test sistem</h5>
+                    <p class="text-muted">Sistem akan cuba load Firebase dan data dummy</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script type="module">
+        import { db, collection, getDocs } from './js/firebase-config.js';
+        import { showAlert, showLoading, hideLoading } from './js/utils.js';
+
+        // Test Firebase Connection
+        document.getElementById('testFirebaseBtn').addEventListener('click', async () => {
+            try {
+                showLoading('Testing Firebase connection...');
+                
+                if (!db) {
+                    throw new Error('Firebase not initialized');
+                }
+                
+                // Try to read from a collection
+                const testQuery = collection(db, 'locations');
+                const snapshot = await getDocs(testQuery);
+                
+                hideLoading();
+                showAlert(`✅ Firebase OK! Found ${snapshot.size} locations`, 'success');
+                
+            } catch (error) {
+                hideLoading();
+                showAlert(`❌ Firebase Error: ${error.message}`, 'danger');
+                console.error('Firebase test failed:', error);
+            }
+        });
+
+        // Load Dummy Data
+        document.getElementById('loadDummyBtn').addEventListener('click', () => {
+            if (window.locationManager && window.locationManager.loadDummyData) {
+                window.locationManager.loadDummyData();
+            } else {
+                showAlert('❌ LocationManager not available. Try Init first.', 'warning');
+            }
+        });
+
+        // Initialize Location Manager
+        document.getElementById('initLocationManagerBtn').addEventListener('click', async () => {
+            try {
+                showLoading('Initializing Location Manager...');
+                
+                // Load the locations page HTML first
+                const response = await fetch('./locations.html');
+                if (!response.ok) {
+                    throw new Error(`Failed to load HTML: ${response.status}`);
+                }
+                
+                const html = await response.text();
+                document.getElementById('pageContent').innerHTML = html;
+                
+                // Wait for DOM to settle
+                await new Promise(resolve => setTimeout(resolve, 100));
+                
+                // Load and initialize the location manager
+                const locationModule = await import('./js/locations.js');
+                window.locationManager = new locationModule.default();
+                
+                hideLoading();
+                showAlert('✅ Location Manager initialized successfully!', 'success');
+                
+            } catch (error) {
+                hideLoading();
+                showAlert(`❌ Init failed: ${error.message}`, 'danger');
+                console.error('Init failed:', error);
+            }
+        });
+    </script>
+</body>
+</html>

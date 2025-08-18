@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <!-- PWA Meta Tags -->
+    <meta name="application-name" content="SPF Tongod">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="SPF Tongod">
+    <meta name="description" content="File storage system for office documents - Firebase PWA">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="msapplication-TileColor" content="#2563eb">
+    <meta name="msapplication-tap-highlight" content="no">
+    <meta name="theme-color" content="#2563eb">
+    
+    <!-- PWA Icons and Manifest -->
+    <link rel="apple-touch-icon" href="/assets/icons/icon-192x192.png">
+    <link rel="apple-touch-icon" sizes="192x192" href="/assets/icons/icon-192x192.png">
+    <link rel="apple-touch-icon" sizes="512x512" href="/assets/icons/icon-512x512.png">
+    <link rel="icon" type="image/png" href="/assets/icons/favicon.ico">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="mask-icon" href="/assets/icons/icon-192x192.png" color="#2563eb">
+    <link rel="shortcut icon" href="/assets/icons/favicon.ico">
+    
+    <title>Sistem Penyimpanan Fail Tongod</title>
+    
+    <!-- CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="/assets/css/style.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loadingScreen" class="loading-screen">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-3">Memuatkan sistem...</p>
+    </div>
+
+    <!-- Auth Container (Login/Register) -->
+    <div id="authContainer" class="auth-container d-none">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-md-6 col-lg-4">
+                    <div class="card shadow-lg">
+                        <div class="card-body">
+                            <div class="text-center mb-4">
+                                <h4><i class="fas fa-archive text-primary"></i> SPF Tongod</h4>
+                                <p class="text-muted">Sistem Penyimpanan Fail</p>
+                            </div>
+                            
+                            <!-- Login/Register Toggle -->
+                            <div class="text-center mb-3">
+                                <div class="btn-group w-100" role="group">
+                                    <input type="radio" class="btn-check" name="authMode" id="loginMode" autocomplete="off" checked>
+                                    <label class="btn btn-outline-primary" for="loginMode">Log Masuk</label>
+                                    
+                                    <input type="radio" class="btn-check" name="authMode" id="registerMode" autocomplete="off">
+                                    <label class="btn btn-outline-primary" for="registerMode">Daftar</label>
+                                </div>
+                            </div>
+
+                            <!-- Login Form -->
+                            <form id="loginForm">
+                                <div class="mb-3">
+                                    <label for="email" class="form-label">E-mel</label>
+                                    <input type="email" class="form-control" id="email" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="password" class="form-label">Kata Laluan</label>
+                                    <input type="password" class="form-control" id="password" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100 mb-3">Log Masuk</button>
+                                
+                                <div class="text-center mb-3">
+                                    <button type="button" class="btn btn-link p-0" id="forgotPasswordBtn">
+                                        Lupa kata laluan?
+                                    </button>
+                                </div>
+                                
+                                <div class="text-center">
+                                    <p class="text-muted">atau</p>
+                                    <button type="button" id="googleLoginBtn" class="btn btn-outline-danger w-100">
+                                        <i class="fab fa-google me-2"></i>
+                                        Log masuk dengan Google
+                                    </button>
+                                </div>
+                            </form>
+
+                            <!-- Registration Form -->
+                            <form id="registerForm" class="d-none">
+                                <div class="mb-3">
+                                    <label for="regName" class="form-label">Nama Penuh</label>
+                                    <input type="text" class="form-control" id="regName" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="regEmail" class="form-label">E-mel</label>
+                                    <input type="email" class="form-control" id="regEmail" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="regPassword" class="form-label">Kata Laluan</label>
+                                    <input type="password" class="form-control" id="regPassword" required minlength="6">
+                                    <div class="form-text">Minimum 6 aksara</div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="regConfirmPassword" class="form-label">Sahkan Kata Laluan</label>
+                                    <input type="password" class="form-control" id="regConfirmPassword" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="regDepartment" class="form-label">Jabatan</label>
+                                    <select class="form-select" id="regDepartment" required>
+                                        <option value="Pentadbiran">Pentadbiran</option>
+                                        <option value="Kewangan">Kewangan</option>
+                                        <option value="Sumber Manusia">Sumber Manusia</option>
+                                        <option value="Perancangan">Perancangan</option>
+                                        <option value="ICT">ICT</option>
+                                    </select>
+                                </div>
+                                <button type="submit" class="btn btn-success w-100 mb-3">Daftar Akaun</button>
+                                
+                                <div class="text-center">
+                                    <p class="text-muted">atau</p>
+                                    <button type="button" id="googleRegisterBtn" class="btn btn-outline-danger w-100">
+                                        <i class="fab fa-google me-2"></i>
+                                        Daftar dengan Google
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App Container -->
+    <div id="appContainer" class="d-none">
+        <div class="container-fluid">
+            <div class="row">
+                <!-- Sidebar -->
+                <nav class="col-md-3 col-lg-2 d-md-block sidebar collapse" id="sidebarMenu">
+                    <div class="position-sticky pt-3">
+                        <!-- Close button for mobile -->
+                        <div class="d-flex justify-content-between align-items-center px-3 mb-3 d-md-none">
+                            <h5 class="text-white fw-bold mb-0">
+                                <i class="fas fa-archive me-2"></i>
+                                SPF Tongod
+                            </h5>
+                            <button type="button" class="btn btn-link text-white p-0" id="sidebarCloseBtn" aria-label="Close menu">
+                                <i class="fas fa-times fa-lg"></i>
+                            </button>
+                        </div>
+                        
+                        <!-- Header for desktop -->
+                        <div class="px-3 mb-4 d-none d-md-block">
+                            <h5 class="text-white fw-bold">
+                                <i class="fas fa-archive me-2"></i>
+                                SPF Tongod
+                            </h5>
+                            <small class="text-muted">Sistem Penyimpanan Fail</small>
+                        </div>
+                        
+                        <ul class="nav flex-column" id="navigationMenu">
+                            <li class="nav-item">
+                                <a class="nav-link active" href="#" data-page="dashboard">
+                                    <i class="fas fa-tachometer-alt"></i>
+                                    Dashboard
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" data-page="files">
+                                    <i class="fas fa-folder"></i>
+                                    Pengurusan Fail
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" data-page="locations">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    Lokasi
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" data-page="borrowings">
+                                    <i class="fas fa-handshake"></i>
+                                    Peminjaman
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" data-page="reports">
+                                    <i class="fas fa-chart-bar"></i>
+                                    Laporan
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" data-page="users">
+                                    <i class="fas fa-users"></i>
+                                    Pengguna
+                                </a>
+                            </li>
+                        </ul>
+                        
+                        <hr class="text-secondary">
+                        
+                        <ul class="nav flex-column">
+                            <li class="nav-item">
+                                <a class="nav-link text-light" href="#" id="logoutBtn">
+                                    <i class="fas fa-sign-out-alt"></i>
+                                    Log Keluar
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </nav>
+                
+                <!-- Sidebar overlay for mobile -->
+                <div class="sidebar-overlay d-none" id="sidebarOverlay"></div>
+                
+                <!-- Main content -->
+                <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
+                    <!-- Top navbar -->
+                    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm mb-4">
+                        <div class="container-fluid">
+                            <button class="navbar-toggler d-md-none" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenu">
+                                <span class="navbar-toggler-icon"></span>
+                            </button>
+                            
+                            <div class="navbar-nav ms-auto">
+                                <div class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                                        <div class="me-2" id="userInfo">
+                                            <div class="fw-semibold" id="userName"></div>
+                                            <small class="text-muted" id="userRole"></small>
+                                        </div>
+                                        <i class="fas fa-user-circle fa-lg text-secondary"></i>
+                                    </a>
+                                    <ul class="dropdown-menu dropdown-menu-end">
+                                        <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i>Profil</a></li>
+                                        <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i>Tetapan</a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li>
+                                            <a class="dropdown-item" href="#" id="logoutDropdown">
+                                                <i class="fas fa-sign-out-alt me-2"></i>Log Keluar
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </nav>
+                    
+                    <!-- Page content -->
+                    <div class="container-fluid">
+                        <div id="alertContainer"></div>
+                        <div id="pageContent">
+                            <!-- Dynamic content will be loaded here -->
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </div>
+
+    <!-- Offline Indicator -->
+    <div id="offlineIndicator" class="offline-indicator d-none">
+        <i class="fas fa-wifi-slash me-2"></i>
+        Tiada sambungan internet - Bekerja dalam mod offline
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Firebase SDK -->
+    <script type="module" src="/js/firebase-config.js"></script>
+    <script type="module" src="/js/auth.js"></script>
+    <script type="module" src="/js/app.js"></script>
+    
+    <!-- PWA Install Script -->
+    <script src="/js/pwa-install.js"></script>
+</body>
+</html>

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Generate PWA Icons</title>
+    <style>
+        canvas { display: none; }
+        .download-links { margin: 20px; }
+        .download-links a { display: block; margin: 5px 0; }
+    </style>
+</head>
+<body>
+    <h2>PWA Icons Generator</h2>
+    <p>Click the button to generate and download icons:</p>
+    <button onclick="generateIcons()">Generate Icons</button>
+    
+    <div id="downloadLinks" class="download-links"></div>
+
+    <script>
+        function generateIcons() {
+            const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
+            const downloadLinks = document.getElementById('downloadLinks');
+            downloadLinks.innerHTML = '';
+            
+            sizes.forEach(size => {
+                const canvas = document.createElement('canvas');
+                canvas.width = size;
+                canvas.height = size;
+                const ctx = canvas.getContext('2d');
+                
+                // Create gradient background
+                const gradient = ctx.createLinearGradient(0, 0, size, size);
+                gradient.addColorStop(0, '#2563eb');
+                gradient.addColorStop(1, '#1d4ed8');
+                
+                // Draw rounded rectangle background
+                const radius = size * 0.125; // 12.5% rounded corners
+                ctx.fillStyle = gradient;
+                roundRect(ctx, 0, 0, size, size, radius);
+                ctx.fill();
+                
+                // Draw file cabinet icon
+                const iconSize = size * 0.5;
+                const iconX = size * 0.25;
+                const iconY = size * 0.2;
+                
+                ctx.strokeStyle = 'white';
+                ctx.fillStyle = 'white';
+                ctx.lineWidth = size * 0.015;
+                
+                // Main cabinet outline
+                roundRect(ctx, iconX, iconY, iconSize, iconSize * 1.3, size * 0.03);
+                ctx.stroke();
+                
+                // Drawers
+                const drawerHeight = iconSize * 0.25;
+                const drawerWidth = iconSize * 0.8;
+                const drawerX = iconX + iconSize * 0.1;
+                
+                for(let i = 0; i < 3; i++) {
+                    const drawerY = iconY + iconSize * 0.15 + (i * drawerHeight * 1.2);
+                    ctx.globalAlpha = 0.9 - (i * 0.2);
+                    roundRect(ctx, drawerX, drawerY, drawerWidth, drawerHeight, size * 0.015);
+                    ctx.fill();
+                    
+                    // Handle
+                    ctx.globalAlpha = 1;
+                    ctx.beginPath();
+                    ctx.arc(drawerX + drawerWidth - size * 0.04, drawerY + drawerHeight/2, size * 0.015, 0, 2 * Math.PI);
+                    ctx.fill();
+                }
+                
+                // Text
+                ctx.globalAlpha = 1;
+                ctx.fillStyle = 'white';
+                ctx.font = `bold ${size * 0.09}px Arial, sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.fillText('SPF', size/2, size * 0.78);
+                
+                // Create download link
+                canvas.toBlob(function(blob) {
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = `icon-${size}x${size}.png`;
+                    link.textContent = `Download icon-${size}x${size}.png`;
+                    downloadLinks.appendChild(link);
+                });
+            });
+            
+            // Generate favicon
+            const faviconCanvas = document.createElement('canvas');
+            faviconCanvas.width = 32;
+            faviconCanvas.height = 32;
+            const faviconCtx = faviconCanvas.getContext('2d');
+            
+            const faviconGradient = faviconCtx.createLinearGradient(0, 0, 32, 32);
+            faviconGradient.addColorStop(0, '#2563eb');
+            faviconGradient.addColorStop(1, '#1d4ed8');
+            
+            faviconCtx.fillStyle = faviconGradient;
+            roundRect(faviconCtx, 0, 0, 32, 32, 4);
+            faviconCtx.fill();
+            
+            faviconCtx.fillStyle = 'white';
+            faviconCtx.font = 'bold 14px Arial';
+            faviconCtx.textAlign = 'center';
+            faviconCtx.fillText('F', 16, 20);
+            
+            faviconCanvas.toBlob(function(blob) {
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'favicon.ico';
+                link.textContent = 'Download favicon.ico';
+                downloadLinks.appendChild(link);
+            });
+        }
+        
+        function roundRect(ctx, x, y, width, height, radius) {
+            ctx.beginPath();
+            ctx.moveTo(x + radius, y);
+            ctx.lineTo(x + width - radius, y);
+            ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+            ctx.lineTo(x + width, y + height - radius);
+            ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+            ctx.lineTo(x + radius, y + height);
+            ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+            ctx.lineTo(x, y + radius);
+            ctx.quadraticCurveTo(x, y, x + radius, y);
+            ctx.closePath();
+        }
+    </script>
+</body>
+</html>
