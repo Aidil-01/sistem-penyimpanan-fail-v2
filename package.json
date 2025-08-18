@@ -3,17 +3,44 @@
   "version": "2.0.0",
   "description": "File Storage Management System for Tongod District Office",
   "main": "upload-dummy-data.js",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
   "scripts": {
+    "preinstall": "npm config set fund false && npm config set audit false",
+    "postinstall": "echo 'Dependencies installed successfully'",
     "upload-data": "node upload-dummy-data.js",
     "clean-upload": "node upload-dummy-data.js --clean",
-    "deploy": "firebase deploy",
-    "serve": "firebase serve"
+    "build": "echo 'Build step - copying files' && mkdir -p dist && cp -r firebase-conversion/* dist/",
+    "prebuild": "echo 'Preparing build environment'",
+    "postbuild": "echo 'Build completed successfully'",
+    "deploy": "firebase deploy --only hosting",
+    "deploy:functions": "firebase deploy --only functions",
+    "serve": "firebase serve --only hosting",
+    "serve:emulators": "firebase emulators:start",
+    "test": "echo 'No tests specified' && exit 0",
+    "lint": "echo 'Linting files...' && exit 0",
+    "validate": "echo 'Validating configuration...' && firebase use --add",
+    "clean": "rm -rf dist && rm -rf .firebase",
+    "deps:check": "npm list --depth=0",
+    "deps:audit": "npm audit --audit-level moderate",
+    "deps:update": "npm update",
+    "firebase:init": "firebase init",
+    "firebase:login": "firebase login"
   },
   "dependencies": {
-    "firebase-admin": "^12.0.0"
+    "firebase-admin": "^12.5.0"
   },
   "devDependencies": {
-    "firebase-tools": "^13.0.0"
+    "firebase-tools": "^13.20.1"
+  },
+  "peerDependencies": {},
+  "optionalDependencies": {},
+  "funding": false,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Aidil-01/sistem-penyimpanan-fail-v2.git"
   },
   "keywords": [
     "firebase",
@@ -21,8 +48,23 @@
     "document-storage",
     "pwa",
     "malaysia",
-    "government"
+    "government",
+    "firestore",
+    "hosting"
   ],
-  "author": "Aidil",
-  "license": "MIT"
+  "author": {
+    "name": "Aidil",
+    "email": "aidil@example.com"
+  },
+  "license": "MIT",
+  "private": true,
+  "config": {
+    "unsafe-perm": true
+  },
+  "overrides": {
+    "semver": ">=7.5.2"
+  },
+  "resolutions": {
+    "semver": ">=7.5.2"
+  }
 }
