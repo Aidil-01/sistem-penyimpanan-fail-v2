@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Test Location Dropdown - SPF Tongod</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        .test-container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .status-box {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .log-container {
+            background: #212529;
+            color: #fff;
+            padding: 15px;
+            border-radius: 5px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container test-container">
+        <div class="text-center mb-4">
+            <h2><i class="fas fa-vial me-2"></i>Test Location Dropdown Fix</h2>
+            <p class="text-muted">Menguji pembetulan dropdown lokasi untuk form Pengurusan Fail</p>
+        </div>
+
+        <!-- Test Status -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5><i class="fas fa-info-circle me-2"></i>Status Ujian</h5>
+            </div>
+            <div class="card-body">
+                <div id="testStatus" class="status-box">
+                    <i class="fas fa-spinner fa-spin me-2"></i>Memulakan ujian...
+                </div>
+            </div>
+        </div>
+
+        <!-- Test Form -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5><i class="fas fa-file-alt me-2"></i>Form Ujian Fail Baharu</h5>
+            </div>
+            <div class="card-body">
+                <form id="testFileForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Tajuk Fail <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="title" 
+                                   value="Test Fail - Location Dropdown" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Nombor Rujukan</label>
+                            <input type="text" class="form-control" name="reference_number" 
+                                   value="TEST001/2024">
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Jabatan <span class="text-danger">*</span></label>
+                            <select class="form-select" name="department" required>
+                                <option value="">Pilih Jabatan</option>
+                                <option value="Pentadbiran" selected>Pentadbiran</option>
+                                <option value="Kewangan">Kewangan</option>
+                                <option value="Pembangunan">Pembangunan</option>
+                                <option value="Kesihatan">Kesihatan</option>
+                                <option value="ICT">ICT</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Jenis Dokumen</label>
+                            <select class="form-select" name="document_type">
+                                <option value="surat_rasmi" selected>Surat Rasmi</option>
+                                <option value="laporan">Laporan</option>
+                                <option value="minit_mesyuarat">Minit Mesyuarat</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Tahun Dokumen</label>
+                            <input type="number" class="form-control" name="document_year" 
+                                   value="2024" min="2000" max="2024">
+                        </div>
+                    </div>
+
+                    <!-- Location Dropdown - Yang akan diuji -->
+                    <div class="mb-3">
+                        <label class="form-label">Lokasi Penyimpanan <span class="text-danger">*</span></label>
+                        <select class="form-select" name="location_id" id="testLocationDropdown" required>
+                            <option value="">Pilih Lokasi</option>
+                        </select>
+                        <div class="form-text">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Dropdown ini akan diuji dengan location manager yang baru
+                        </div>
+                        <div id="testLocationStatus" class="mt-2"></div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Keterangan</label>
+                        <textarea class="form-control" name="description" rows="3">Ujian dropdown lokasi yang telah diperbaiki</textarea>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <button type="button" class="btn btn-secondary" id="refreshDropdownBtn">
+                            <i class="fas fa-redo me-1"></i>Refresh Dropdown
+                        </button>
+                        <button type="button" class="btn btn-info" id="showStatsBtn">
+                            <i class="fas fa-chart-bar me-1"></i>Statistik Lokasi
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>Test Simpan
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Test Results -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5><i class="fas fa-list-check me-2"></i>Hasil Ujian</h5>
+            </div>
+            <div class="card-body">
+                <div id="testResults">
+                    <div class="text-muted">
+                        <i class="fas fa-clock me-2"></i>Menunggu ujian...
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Console Log -->
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-terminal me-2"></i>Console Log</h5>
+                <button class="btn btn-sm btn-outline-secondary float-end" id="clearLogBtn">Clear</button>
+            </div>
+            <div class="card-body">
+                <div id="consoleLog" class="log-container">
+                    <div>Sistem log dimulakan...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { db } from './js/firebase-config.js';
+        import locationDropdownManager from './js/location-dropdown-fix.js';
+
+        class LocationDropdownTest {
+            constructor() {
+                this.testResults = [];
+                this.startTime = Date.now();
+                this.init();
+            }
+
+            init() {
+                this.log('Memulakan ujian dropdown lokasi...');
+                this.setupEventListeners();
+                this.runTests();
+            }
+
+            setupEventListeners() {
+                // Refresh dropdown button
+                document.getElementById('refreshDropdownBtn').addEventListener('click', () => {
+                    this.testRefreshDropdown();
+                });
+
+                // Show stats button  
+                document.getElementById('showStatsBtn').addEventListener('click', () => {
+                    this.showLocationStats();
+                });
+
+                // Form submission test
+                document.getElementById('testFileForm').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.testFormSubmission();
+                });
+
+                // Location dropdown change
+                document.getElementById('testLocationDropdown').addEventListener('change', (e) => {
+                    this.testLocationSelection(e.target.value);
+                });
+
+                // Clear log button
+                document.getElementById('clearLogBtn').addEventListener('click', () => {
+                    this.clearLog();
+                });
+            }
+
+            async runTests() {
+                try {
+                    this.updateStatus('Menjalankan ujian...', 'info');
+                    
+                    // Test 1: Load dropdown
+                    await this.testDropdownLoading();
+                    
+                    // Test 2: Check fallback data
+                    await this.testFallbackData();
+                    
+                    // Test 3: Real-time updates
+                    await this.testRealtimeUpdates();
+                    
+                    // Test 4: Error handling
+                    await this.testErrorHandling();
+                    
+                    this.showTestSummary();
+                    
+                } catch (error) {
+                    this.log('ERROR: ' + error.message);
+                    this.updateStatus('Ujian gagal: ' + error.message, 'danger');
+                }
+            }
+
+            async testDropdownLoading() {
+                this.log('TEST 1: Dropdown Loading');
+                
+                const dropdown = document.getElementById('testLocationDropdown');
+                const statusDiv = document.getElementById('testLocationStatus');
+                
+                if (!dropdown) {
+                    throw new Error('Dropdown element not found');
+                }
+
+                const success = await locationDropdownManager.populateLocationDropdown(dropdown);
+                
+                if (success) {
+                    const optionCount = dropdown.options.length - 1; // Exclude placeholder
+                    this.addTestResult('Dropdown Loading', true, `${optionCount} lokasi dimuatkan`);
+                    this.log(`✓ Dropdown berjaya dimuatkan dengan ${optionCount} pilihan`);
+                } else {
+                    this.addTestResult('Dropdown Loading', false, 'Gagal memuatkan dropdown');
+                    this.log('✗ Dropdown gagal dimuatkan');
+                }
+            }
+
+            async testFallbackData() {
+                this.log('TEST 2: Fallback Data');
+                
+                if (locationDropdownManager.locations.size > 0) {
+                    this.addTestResult('Fallback Data', true, `${locationDropdownManager.locations.size} lokasi tersedia`);
+                    this.log(`✓ Data fallback berjaya dengan ${locationDropdownManager.locations.size} lokasi`);
+                } else {
+                    this.addTestResult('Fallback Data', false, 'Tiada data fallback');
+                    this.log('✗ Data fallback tidak tersedia');
+                }
+            }
+
+            async testRealtimeUpdates() {
+                this.log('TEST 3: Real-time Updates');
+                
+                try {
+                    const dropdown = document.getElementById('testLocationDropdown');
+                    const unsubscribe = locationDropdownManager.setupRealtimeListener(dropdown);
+                    
+                    if (unsubscribe) {
+                        this.addTestResult('Real-time Updates', true, 'Listener berjaya ditetapkan');
+                        this.log('✓ Real-time listener berjaya ditetapkan');
+                        
+                        // Clean up
+                        setTimeout(() => {
+                            if (typeof unsubscribe === 'function') {
+                                unsubscribe();
+                                this.log('✓ Real-time listener dibersihkan');
+                            }
+                        }, 1000);
+                    } else {
+                        this.addTestResult('Real-time Updates', false, 'Listener tidak dapat ditetapkan');
+                        this.log('✗ Real-time listener tidak dapat ditetapkan');
+                    }
+                } catch (error) {
+                    this.addTestResult('Real-time Updates', false, error.message);
+                    this.log('✗ Real-time test error: ' + error.message);
+                }
+            }
+
+            async testErrorHandling() {
+                this.log('TEST 4: Error Handling');
+                
+                try {
+                    // Test dengan dropdown element yang tidak wujud
+                    const fakeDropdown = document.createElement('select');
+                    const result = await locationDropdownManager.populateLocationDropdown(fakeDropdown);
+                    
+                    this.addTestResult('Error Handling', true, 'Error handling berjaya');
+                    this.log('✓ Error handling berfungsi dengan baik');
+                } catch (error) {
+                    this.addTestResult('Error Handling', false, 'Error handling gagal');
+                    this.log('✗ Error handling tidak berfungsi: ' + error.message);
+                }
+            }
+
+            testRefreshDropdown() {
+                this.log('Manual refresh dropdown...');
+                const dropdown = document.getElementById('testLocationDropdown');
+                locationDropdownManager.populateLocationDropdown(dropdown);
+            }
+
+            showLocationStats() {
+                const stats = locationDropdownManager.getLocationStats();
+                this.log('STATISTIK LOKASI:');
+                this.log(`- Total: ${stats.total}`);
+                this.log(`- Tersedia: ${stats.available}`);
+                this.log(`- Tidak tersedia: ${stats.occupied}`);
+                this.log(`- Bilik: ${stats.rooms}`);
+                this.log(`- Rak: ${stats.racks}`);
+                this.log(`- Slot: ${stats.slots}`);
+                
+                this.updateLocationStatus(`Statistik: ${stats.available}/${stats.total} slot tersedia`, 'info');
+            }
+
+            testLocationSelection(locationId) {
+                if (!locationId) return;
+                
+                const locationName = locationDropdownManager.getLocationDisplayName(locationId);
+                const isAvailable = locationDropdownManager.isLocationAvailable(locationId);
+                
+                this.log(`Lokasi dipilih: ${locationName} (${isAvailable ? 'Tersedia' : 'Tidak tersedia'})`);
+                this.updateLocationStatus(`Dipilih: ${locationName}`, isAvailable ? 'success' : 'warning');
+            }
+
+            testFormSubmission() {
+                const formData = new FormData(document.getElementById('testFileForm'));
+                const data = Object.fromEntries(formData.entries());
+                
+                this.log('FORM SUBMISSION TEST:');
+                this.log('Data: ' + JSON.stringify(data, null, 2));
+                
+                if (data.location_id) {
+                    const locationName = locationDropdownManager.getLocationDisplayName(data.location_id);
+                    this.updateStatus(`Form test berjaya dengan lokasi: ${locationName}`, 'success');
+                } else {
+                    this.updateStatus('Form test: Tiada lokasi dipilih', 'warning');
+                }
+            }
+
+            addTestResult(testName, success, details) {
+                this.testResults.push({
+                    name: testName,
+                    success: success,
+                    details: details,
+                    timestamp: new Date().toLocaleTimeString()
+                });
+            }
+
+            showTestSummary() {
+                const passedTests = this.testResults.filter(t => t.success).length;
+                const totalTests = this.testResults.length;
+                const duration = Date.now() - this.startTime;
+                
+                const resultsHtml = `
+                    <div class="mb-3">
+                        <h6>Ringkasan: ${passedTests}/${totalTests} ujian lulus (${duration}ms)</h6>
+                    </div>
+                    <div class="row">
+                        ${this.testResults.map(test => `
+                            <div class="col-md-6 mb-2">
+                                <div class="card ${test.success ? 'border-success' : 'border-danger'}">
+                                    <div class="card-body p-2">
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-${test.success ? 'check-circle text-success' : 'times-circle text-danger'} me-2"></i>
+                                            <div>
+                                                <strong>${test.name}</strong>
+                                                <br>
+                                                <small class="text-muted">${test.details}</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                
+                document.getElementById('testResults').innerHTML = resultsHtml;
+                
+                if (passedTests === totalTests) {
+                    this.updateStatus(`Semua ujian lulus! (${passedTests}/${totalTests})`, 'success');
+                } else {
+                    this.updateStatus(`${passedTests}/${totalTests} ujian lulus`, 'warning');
+                }
+                
+                this.log(`\nRINGKASAN UJIAN: ${passedTests}/${totalTests} lulus dalam ${duration}ms`);
+            }
+
+            updateStatus(message, type) {
+                const statusDiv = document.getElementById('testStatus');
+                const iconMap = {
+                    info: 'fa-info-circle',
+                    success: 'fa-check-circle',
+                    warning: 'fa-exclamation-triangle',
+                    danger: 'fa-exclamation-circle'
+                };
+                
+                statusDiv.innerHTML = `
+                    <i class="fas ${iconMap[type]} me-2"></i>
+                    <strong>${message}</strong>
+                `;
+                statusDiv.className = `status-box alert alert-${type} mb-0`;
+            }
+
+            updateLocationStatus(message, type) {
+                const statusDiv = document.getElementById('testLocationStatus');
+                const iconMap = {
+                    info: 'fa-info-circle',
+                    success: 'fa-check-circle', 
+                    warning: 'fa-exclamation-triangle',
+                    danger: 'fa-exclamation-circle'
+                };
+                
+                statusDiv.innerHTML = `
+                    <small class="text-${type}">
+                        <i class="fas ${iconMap[type]} me-1"></i>
+                        ${message}
+                    </small>
+                `;
+            }
+
+            log(message) {
+                const logContainer = document.getElementById('consoleLog');
+                const timestamp = new Date().toLocaleTimeString();
+                const logLine = document.createElement('div');
+                logLine.textContent = `[${timestamp}] ${message}`;
+                logContainer.appendChild(logLine);
+                logContainer.scrollTop = logContainer.scrollHeight;
+                
+                // Also log to browser console
+                console.log(message);
+            }
+
+            clearLog() {
+                document.getElementById('consoleLog').innerHTML = '<div>Log dibersihkan...</div>';
+            }
+        }
+
+        // Start test when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new LocationDropdownTest();
+        });
+    </script>
+</body>
+</html>
